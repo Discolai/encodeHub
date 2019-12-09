@@ -1,47 +1,96 @@
 import json, datetime, subprocess, time, io, re
 
-def ffmpeg(inargs, input, outargs, output):
-    cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
-    return subprocess.Popen(cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+class FFmpeg:
+    """docstring for FFmpeg."""
 
-def read_output(output):
-    reg = "".join([
-        "^frame=(?P<frame>.+)",
-        "fps=(?P<fps>.+)",
-        "stream.+=(?P<stream>.+)",
-        "bitrate=(?P<bitrate>.+)kbits/s",
-        "total_size=(?P<total_size>.+)",
-        "out_time_ms=(?P<out_time_ms>.+)",
-        "out_time=(?P<out_time>.+)",
-        "dup_frames=(?P<dup_frames>.+)",
-        "drop_frames=(?P<drop_frames>.+)",
-        "speed=(?P<speed>.+)x",
-        "progress=(?P<progress>.+)"
-    ])
+    progress_reg = re.compile(
+        "".join([
+            "^frame=(?P<frame>.+)",
+            "fps=(?P<fps>.+)",
+            "stream.+=(?P<stream>.+)",
+            "bitrate=(?P<bitrate>.+)kbits/s",
+            "total_size=(?P<total_size>.+)",
+            "out_time_ms=(?P<out_time_ms>.+)",
+            "out_time=(?P<out_time>.+)",
+            "dup_frames=(?P<dup_frames>.+)",
+            "drop_frames=(?P<drop_frames>.+)",
+            "speed=(?P<speed>.+)x",
+            "progress=(?P<progress>.+)"
+        ])
+    )
 
-    match = re.search(reg, output)
-    if not match:
-        return None
-    else:
-        return match.groupdict()
+
+    def __init__(self, inargs, input, outargs, output):
+        self.cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
+
+        ffprobe_cmd = "ffprobe -v error -sexagesimal -show_entries format=duration -of default=noprint_wrappers=1:nokey=1 " + input
+        self.duration = subprocess.run(ffprobe_cmd, stdout=subprocess.PIPE, shell=True).stdout.strip().decode("utf-8")
+        self.duration = hhmmssms_to_ms(self.duration)
+
+        self._p = None
+        self.progress = None
+
+    def start(self):
+        self._p = subprocess.Popen(self.cmd, shell=True, stdout=subprocess.PIPE, stderr=subprocess.STDOUT)
+
+    def discard_info(self):
+        while self._p.stdout.readline()[:8] != b"progress":
+            pass
+
+    def has_finished(self):
+        return self._p.returncode != None
+
+    def _current_progress(self):
+        return int((self.progress["out_time_s"]/self.duration) * 100)
+
+    def _remaining_time(self):
+        return ms_to_hhmmssms(self.duration-(self.progress["out_time_ms"])/self.progress["speed"])
+
+    def _cast_progress(self, progress):
+        # Since ffmpeg for some reason states ms as microseconds instead of milliseconds
+        # This workaround takes into account that it might get fixed in the future
+        ms = hhmmssms_to_ms(progress["out_time"])
+        return {
+            "frame": int(progress["frame"]),
+            "fps": float(progress["fps"]),
+            "stream": progress["stream"],
+            "bitrate": float(progress["bitrate"]),
+            "total_size": int(progress["total_size"]),
+            "out_time_ms": ms,
+            "out_time_s": int(ms/1000),
+            "out_time": progress["out_time"],
+            "dup_frames": int(progress["dup_frames"]),
+            "drop_frames": int(progress["drop_frames"]),
+            "speed": float(progress["speed"]),
+            "progress": progress["progress"],
+        }
+
+    def read_progress(self):
+        out = b""
+        for i in range(11):
+            out += self._p.stdout.readline().strip()
+
+        match = re.search(self.progress_reg, out.decode("utf-8"))
+        if match:
+            self.progress = self._cast_progress(match.groupdict())
+
+            self.progress["progress"] = self._current_progress()
+            self.progress["remaining"] = self._remaining_time()
+        return self.progress
+
+
+
 
 def hhmmssms_to_ms(formatted):
     h, m, s = formatted.split(":")
     return int(h)*3600000 + int(m)*60000 + float(s)*1000
 
-def ms_to_hhmmssms(ms):
-    h = int(ms/3600000)
-    m = int((ms-(h*3600000))/60000)
-    s = float((ms - (h*3600000) - (m*60000))/1000)
-    return ":".join([str(h).zfill(2), str(m).zfill(2), "%.2f"%s])
+def ms_to_hhmmssms(in_ms):
+    h = int(in_ms/3600000)
+    m = int((in_ms-(h*3600000))/60000)
+    s = float((in_ms - (h*3600000) - (m*60000))/1000)
+    return ":".join([str(h).zfill(2), str(m).zfill(2), "%.6f"%s])
 
-
-def current_progress(duration, current):
-    return int((current/duration) * 100)
-
-def remaining_time(duration, current, speed):
-    remaining = (duration-current)/speed
-    return ms_to_hhmmssms((duration-current)/speed)
 
 def main():
     with open("config.json") as f:
@@ -60,31 +109,20 @@ def main():
         input = "\"%s\""%(m)
         output = "\"%shevc.mkv\""%(m[:-3])
 
-        p = ffmpeg(config["ffmpeg"]["inargs"], input, config["ffmpeg"]["outargs"], output)
+        job = FFmpeg(config["ffmpeg"]["inargs"], input, config["ffmpeg"]["outargs"], output)
 
-        while True:
-            out = p.stdout.readline()
-            if out[:8] == b"progress":
-                break
-            else:
-                # print(out)
-                match = re.search(b"Duration: (?P<duration>.+), start", out)
-                if match:
-                    duration = hhmmssms_to_ms(match.group("duration").decode("utf-8"))
-                    # duration = match.group("duration").decode("utf-8")
+        job.start()
+        job.discard_info()
 
-        print(duration)
-        while p.returncode == None:
-            out = b""
-            for i in range(11):
-                out += p.stdout.readline().strip()
-            if out:
-                out = read_output(out.decode("utf-8"))
-                current = hhmmssms_to_ms(out["out_time"])
-                progress = current_progress(duration, current)
-                remaining = remaining_time(duration, current, float(out["speed"]))
-                print("Progress: {}\tRemaining: {}\tFps: {}\tOut time: {}\tSpeed: {}".format(progress, remaining, out["fps"], out["out_time"], out["speed"]))
-
+        while not job.has_finished():
+            progress = job.read_progress()
+            print("Frame: {}\tFps: {}\tProgress: {}%\t Remaining: {}\tOut time: {}".format(
+                progress["frame"],
+                progress["fps"],
+                progress["progress"],
+                progress["remaining"],
+                progress["out_time"]
+            ))
 
         print("stop: ", datetime.datetime.now(), "\n")
 
