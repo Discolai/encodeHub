@@ -4,13 +4,7 @@ import globals
 
 app = Flask(__name__)
 
-@app.route("/status", methods=["GET"])
-def status():
-    if len(globals.progress_q) == 0:
-        return Response(status=404)
-    return jsonify(globals.progress_q.popleft())
-
-@app.route("/jobs/<new_job>", methods=["GET", "POST"])
+@app.route("/enque/<new_job>", methods=["GET", "POST"])
 def jobs(new_job):
     if request.method == "GET":
         if len(globals.job_q) == 0:
@@ -22,13 +16,19 @@ def jobs(new_job):
         globals.job_q.append(shlex.quote(new_job))
         return Response(status=200)
 
-@app.route("/job/pause", methods=["GET", "POST"])
+@app.route("/pause", methods=["POST"])
+def pause():
+    globals.paused = not globals.paused
+    return Response(status=200)
+
+@app.route("/status", methods=["GET"])
 def job():
-    if request.method == "GET":
-        return jsonify(globals.paused)
-    else:
-        globals.paused = not globals.paused
-        return Response(status=200)
+    ret = {"paused": globals.paused}
+    if len(globals.progress_q) > 0:
+        progress = globals.progress_q.popleft()
+        globals.progress_q.appendleft(progress)
+        ret = {**ret, **progress}
+    return jsonify(ret)
 
 
 def run():
