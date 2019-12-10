@@ -42,6 +42,9 @@ class FFmpeg:
     def resume(self):
         self._p.kill(signal.SIGCONT)
 
+    def kill(self):
+        self._p.kill(signal.SIGINT)
+
     def has_finished(self):
         return self._finished
 
@@ -66,7 +69,10 @@ class FFmpeg:
                 if v[1] == "str":
                     res[key] = match.group(key).strip().decode("utf-8")
                 else:
-                    res[key] = locate(v[1])(match.group(key).strip())
+                    try:
+                        res[key] = locate(v[1])(match.group(key).strip())
+                    except:
+                        res[key] = None
             else:
                 res[key] = None
 
