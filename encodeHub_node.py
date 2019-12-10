@@ -8,13 +8,14 @@ def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
     api_thread.start()
     while True:
-        while len(globals.job_queue) == 0:
-            time.sleep(5)
-        m = globals.job_queue.popleft()
-        print("Got job: ", m)
-
         with open("config.json") as f:
             config = json.load(f)
+
+        while len(globals.job_q) == 0:
+            time.sleep(config["sleeptime"])
+
+        m = globals.job_q.popleft()
+        print("Got job: ", m)
 
         input = "\"%s\""%(m)
         output = "\"%shevc.mkv\""%(m[:-3])
@@ -24,17 +25,16 @@ def main():
         job.start()
 
         while not job.has_finished():
-            if globals.pause:
+            if globals.paused:
                 job.pause()
-                while globals.pause:
-                    time.sleep(5)
+                while globals.paused:
+                    time.sleep(config["sleeptime"])
                 job.resume()
 
-            print(globals.pause)
             progress = job.read_progress()
-            globals.out_queue.append(progress)
-            if len(globals.out_queue) > 1:
-                globals.out_queue.popleft()
+            globals.progress_q.append(progress)
+            if len(globals.progress_q) > 1:
+                globals.progress_q.popleft()
 
 
 

@@ -20,5 +20,6 @@
       "-map 0:a -c:a copy",
       "-map 0:s? -c:s copy"
     ]
-    }
+  },
+    "sleeptime": 5
 }
