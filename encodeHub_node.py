@@ -4,7 +4,14 @@ import api
 import globals
 import pickle
 import requests
+import signal
 from ffmpeg import FFmpeg
+
+class ExitCommand(Exception):
+    pass
+
+def signal_handler(signal, frame):
+    raise ExitCommand()
 
 def request_job(distributor):
     try:
@@ -47,6 +54,7 @@ def handle_job(m, config):
     job.kill()
 
 def main():
+    signal.signal(signal.SIGUSR1, signal_handler)
     api_thread = threading.Thread(target=api.run, daemon=True)
     api_thread.start()
     while True:
@@ -80,4 +88,3 @@ if __name__ == '__main__':
             pickle.dump(globals.job_q, f)
         with open(globals.paused_pickle, "wb") as f:
             pickle.dump(globals.paused, f)
-        exit()

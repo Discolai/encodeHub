@@ -1,6 +1,5 @@
 from flask import Flask, Response, request, jsonify
-import json, shlex
-import globals
+import json, shlex, os, globals, signal
 
 app = Flask(__name__)
 
@@ -30,6 +29,10 @@ def job():
         ret = {**ret, **progress}
     return jsonify(ret)
 
+@app.route("/stop", methods=["POST"])
+def stop():
+    os.kill(os.getpid(), signal.SIGUSR1)
+    return Response(status=200)
 
 def run():
     app.run()
