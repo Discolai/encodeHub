@@ -1,117 +1,20 @@
-import json, datetime, subprocess, time, io, re, signal, pexpect
-from pydoc import locate
-
-class DurationError(Exception):
-    pass
-
-class FFmpeg:
-    """docstring for FFmpeg."""
-
-    formats = {
-        "frame": (re.compile(b"frame=(?P<frame>.+)"), "int"),
-        "fps": (re.compile(b"fps=(?P<fps>.+)"), "float"),
-        "stream": (re.compile(b"stream.+=(?P<stream>.+)"), "str"),
-        "bitrate": (re.compile(b"bitrate=(?P<bitrate>.+)kbits/s"), "float"),
-        "total_size": (re.compile(b"total_size=(?P<total_size>.+)"), "int"),
-        "out_time_ms": (re.compile(b"out_time_ms=(?P<out_time_ms>.+)"), "int"),
-        "out_time": (re.compile(b"out_time=(?P<out_time>.+)"), "str"),
-        "dup_frames": (re.compile(b"dup_frames=(?P<dup_frames>.+)"), "int"),
-        "drop_frames": (re.compile(b"drop_frames=(?P<drop_frames>.+)"), "int"),
-        "speed": (re.compile(b"speed=(?P<speed>.+)x"), "float"),
-        "progress":(re.compile(b"progress=(?P<progress>.+)"), "str")
-    }
-
-
-    def __init__(self, inargs, input, outargs, output):
-        self.cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
-
-        self._p = None
-        self.progress = None
-        self._finished = False
-
-    def start(self):
-        self._p = pexpect.spawn(self.cmd)
-        self._get_duration()
-        self.exp_list = self._p.compile_pattern_list([pexpect.EOF, "(.+)"])
-
-    def has_finished(self):
-        return self._finished
-
-    def _get_duration(self):
-        try:
-            self._p.expect("Duration: (?P<duration>.+), start:", timeout=5)
-            self.duration = hhmmssms_to_ms(self._p.match.group("duration").decode("utf-8").strip())
-        except pexpect.exceptions.TIMEOUT as e:
-            raise DurationError("Unable to get video duration!")
-
-    def _current_progress(self, out_time, duration):
-        return int((out_time/duration) * 100)
-
-    def _remaining_time(self, out_time, duration, speed):
-        return ms_to_hhmmssms((duration-out_time)/speed)
-
-    def auto_cast(self, progress):
-        res = {}
-        for key, v in self.formats.items():
-            match = re.search(v[0], progress)
-            if match:
-                if v[1] == "str":
-                    res[key] = match.group(key).strip().decode("utf-8")
-                else:
-                    res[key] = locate(v[1])(match.group(key).strip())
-            else:
-                res[key] = None
-
-        return res
-
-
-    def read_progress(self):
-        i = self._p.expect_list(self.exp_list)
-        if i == 0:
-            self._finished = True
-        else:
-            out = self._p.match.group(i)
-            self.progress = self.auto_cast(out)
-            try:
-                if self.progress["progress"] in ["end", "stop"]:
-                    self._p.kill(signal.SIGINT)
-            except Exception as e:
-                pass
-            try:
-                ms = hhmmssms_to_ms(self.progress["out_time"])
-                self.progress["percentage"] = self._current_progress(ms, self.duration)
-                self.progress["remaining"] = self._remaining_time(ms, self.duration, self.progress["speed"])
-            except Exception as e:
-                print(self.progress)
-                self.progress["percentage"] = None
-                self.progress["remaining"] = None
-        return self.progress
-
-
-def hhmmssms_to_ms(formatted):
-    h, m, s = formatted.split(":")
-    return int(h)*3600000 + int(m)*60000 + float(s)*1000
-
-def ms_to_hhmmssms(in_ms):
-    h = int(in_ms/3600000)
-    m = int((in_ms-(h*3600000))/60000)
-    s = float((in_ms - (h*3600000) - (m*60000))/1000)
-    return ":".join([str(h).zfill(2), str(m).zfill(2), "%.6f"%s])
-
+import json, time
+import threading
+import api
+import globals
+from ffmpeg import FFmpeg
 
 def main():
-    with open("config.json") as f:
-        config = json.load(f)
+    api_thread = threading.Thread(target=api.run, daemon=True)
+    api_thread.start()
+    while True:
+        while len(globals.job_queue) == 0:
+            time.sleep(5)
+        m = globals.job_queue.popleft()
+        print("Got job: ", m)
 
-    with open("queue.json") as f:
-        q = json.load(f)
-
-    for m in q:
-        print(m)
-        print("start: ", datetime.datetime.now())
-        # q.remove(m)
-        with open("queue.json", "w") as f:
-            json.dump(q, f)
+        with open("config.json") as f:
+            config = json.load(f)
 
         input = "\"%s\""%(m)
         output = "\"%shevc.mkv\""%(m[:-3])
@@ -121,18 +24,18 @@ def main():
         job.start()
 
         while not job.has_finished():
-            progress = job.read_progress()
-            print("Frame: {}\tFps: {}\tProgress: {}%\t Remaining: {}\tSpeed: {}\tOut time: {}\tDuration: {}".format(
-                progress["frame"],
-                progress["fps"],
-                progress["percentage"],
-                progress["remaining"],
-                progress["speed"],
-                progress["out_time"],
-                ms_to_hhmmssms(job.duration)
-            ))
+            if globals.pause:
+                job.pause()
+                while globals.pause:
+                    time.sleep(5)
+                job.resume()
 
-        print("stop: ", datetime.datetime.now(), "\n")
+            print(globals.pause)
+            progress = job.read_progress()
+            globals.out_queue.append(progress)
+            if len(globals.out_queue) > 1:
+                globals.out_queue.popleft()
+
 
 
 
