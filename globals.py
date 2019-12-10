@@ -4,7 +4,7 @@ import pickle
 paused_pickle = "paused_pickle.pkl"
 try:
     with open(paused_pickle, "rb") as f:
-        paused_pickle = pickle.load(f)
+        paused = pickle.load(f)
 except:
     paused = False
 
