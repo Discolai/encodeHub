@@ -3,7 +3,25 @@ import threading
 import api
 import globals
 import pickle
+import requests
 from ffmpeg import FFmpeg
+
+def request_job(distributor):
+    try:
+        r = requests.put(distributor+"/jobs/oldest")
+    except:
+        return None
+
+    if r.status_code != 200:
+        return None
+
+    body = json.loads(r.text)
+    if body["err"]:
+        print(body["err"])
+        return None
+    else:
+        return body["job"]
+
 
 def handle_job(m, config):
     print("Got job: ", m)
@@ -26,6 +44,7 @@ def handle_job(m, config):
         globals.progress_q.append(progress)
         if len(globals.progress_q) > 1:
             globals.progress_q.popleft()
+    job.kill()
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
@@ -35,14 +54,19 @@ def main():
             config = json.load(f)
 
         while len(globals.job_q) == 0:
-            time.sleep(config["sleeptime"])
+            r = request_job(config["distributor"])
+            if not r:
+                time.sleep(config["sleeptime"])
+            else:
+                globals.job_q.append(r)
+
 
         try:
             m = globals.job_q.popleft()
-            handle_job(m, config)
+            handle_job(m[1], config)
         except:
             globals.job_q.appendleft(m)
-            raise e
+            raise Exception()
 
 
 
@@ -55,5 +79,5 @@ if __name__ == '__main__':
         with open(globals.job_q_pickle, "wb") as f:
             pickle.dump(globals.job_q, f)
         with open(globals.paused_pickle, "wb") as f:
-            picle.dump(globals.paused)
+            pickle.dump(globals.paused, f)
         exit()
