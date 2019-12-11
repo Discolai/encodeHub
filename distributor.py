@@ -18,19 +18,45 @@ def close_connection(exception):
         db.commit()
         db.close()
 
-@app.route("/jobs/<job>", methods=["DELETE", "POST"])
-def insert(job):
+@app.route("/jobs/<id>", methods=["DELETE"])
+def delete(id):
     cur = get_db().cursor()
-    if request.method == "POST":
-        try:
-            cur.execute("insert into jobs (job) values (?);", (job,))
-            return jsonify({"err": None}), 201
-        except Exception as e:
-            return jsonify({"err": str(e)}), 400
+    try:
+        cur.execute("delete from jobs where id=(?);", (id,))
+        return jsonify({"err": None}), 200
+    except Exception as e:
+        return jsonify({"err": str(e)}), 400
 
+@app.route("/jobs", methods=["POST"])
+def insert():
+    cur = get_db().cursor()
+    jobs = request.get_json()
+    if isinstance(jobs, list):
+        for job in jobs:
+            if isinstance(job, str):
+                try:
+                    cur.execute("insert into jobs (job) values (?)", (job,))
+                except Exception as e:
+                    return jsonify({"err": str(e)}), 500
+            else:
+                return jsonify({"err": "\"{}\" is an invalid job!"}), 400
+        return jsonify({"err": None}), 200
+    else:
+        return jsonify({"err": "Wrong json formatting, expected array!"}), 400
+
+@app.route("/jobs", methods=["GET"])
+def jobs():
+    cur = get_db().cursor()
+
+    cur.execute("select * from jobs;")
+    jobs = cur.fetchall()
+    if len(jobs):
+        return jsonify({"err": None, "jobs": jobs}), 200
+    else:
+        return jsonify({"err": "Job queue is empty!", "jobs": None}), 404
 
 @app.route("/jobs/oldest", methods=["PUT"])
-def jobs():
+def oldest():
     cur = get_db().cursor()
 
     cur.execute("select id, job, MIN(timestamp) from jobs where processing = 0;")
