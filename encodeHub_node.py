@@ -39,18 +39,19 @@ def handle_job(m, config):
             print("Stopping job: ", m)
             job.stop()
             globals.stop = False
-            return
+
         if globals.paused:
             job.pause()
-            while globals.paused:
+            while globals.paused and not globals.stop:
                 time.sleep(config["sleeptime"])
+            globals.paused = False
             job.resume()
 
         progress = job.read_progress()
         globals.progress_q.append(progress)
         if len(globals.progress_q) > 1:
             globals.progress_q.popleft()
-    job.stop()
+    print(job.report)
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
