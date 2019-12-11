@@ -36,6 +36,7 @@ class FFmpeg:
         self.progress = None
         self._finished = False
         self._pause = False
+        self.report = None
 
     def start(self):
         self._p = pexpect.spawn(self.cmd)
@@ -50,7 +51,7 @@ class FFmpeg:
 
     def stop(self):
         self._p.close()
-        self._finished = True
+        # self._finished = True
 
     def has_finished(self):
         return self._finished
@@ -87,14 +88,13 @@ class FFmpeg:
         i = self._p.expect_list(self.exp_list)
         if i == 0:
             self._finished = True
+            self.stop()
         else:
             out = self._p.match.group(i)
             self.progress = self.auto_cast(out)
             try:
                 if self.progress["progress"] in ["end", "stop"]:
-                    self.stop()
-                    print(out)
-                    print(self.progress)
+                    self.report = self.progress
             except:
                 pass
             try:
