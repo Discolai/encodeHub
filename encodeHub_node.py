@@ -36,7 +36,8 @@ def handle_job(m, config):
 
     while not job.has_finished():
         if globals.stop:
-            job.kill()
+            print("Stopping job: ", m)
+            job.stop()
             globals.stop = False
             return
         if globals.paused:
@@ -49,7 +50,7 @@ def handle_job(m, config):
         globals.progress_q.append(progress)
         if len(globals.progress_q) > 1:
             globals.progress_q.popleft()
-    job.kill()
+    job.stop()
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
@@ -70,17 +71,19 @@ def main():
             globals.stop = False
             m = globals.job_q.popleft()
             handle_job(m[1], config)
+        except Exception as e:
+            globals.job_q.appendleft(m)
+            raise e
         except:
             globals.job_q.appendleft(m)
-            raise Exception()
-
+            raise KeyboardInterrupt()
 
 
 if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print("Intercepted exception: {}".format(e))
+        print("Intercepted exception: ", e)
     except:
         print("Intercepted KeyboardInterrupt")
     finally:
