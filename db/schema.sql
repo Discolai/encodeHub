@@ -1,0 +1,39 @@
+drop table jobs;
+drop table nodes;
+drop table logs;
+
+CREATE TABLE IF NOT EXISTS jobs (
+  jid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  job VARCHAR(255) NOT NULL UNIQUE,
+  nid INTEGER DEFAULT NULL REFERENCES nodes(nid),
+  timestamp DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP
+);
+
+CREATE TABLE IF NOT EXISTS nodes (
+  nid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  name VARCHAR(255) NOT NULL UNIQUE
+);
+
+CREATE TABLE IF NOT EXISTS logs (
+  lid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  nid INTEGER NOT NULL REFERENCES nodes(nid),
+  frame INTEGER NOT NULL,
+  fps FLOAT NOT NULL,
+  speed FLOAT NOT NULL,
+  bitrate FLOAT NOT NULL,
+  drop_frames INTEGER NOT NULL,
+  dup_frames INTEGER NOT NULL,
+  stream VARCHAR(10) NOT NULL,
+  elapsed_time DATETIME NOT NULL,
+  out_time DATETIME NOT NULL,
+  remaining_time DATETIME NOT NULL,
+  percentage INTEGER NOT NULL,
+  progress VARCHAR(10) NOT NULL,
+  video INTEGER NOT NULL,
+  audio INTEGER NOT NULL,
+  subtitle INTEGER NOT NULL,
+  global_headers INTEGER NOT NULL,
+  other_streams INTEGER NOT NULL,
+  total_size INTEGER NOT NULL,
+  muxing_overhead FLOAT NOT NULL
+);
