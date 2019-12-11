@@ -110,10 +110,10 @@ class FFmpeg:
             try:
                 ms = hhmmssms_to_ms(self.progress["out_time"])
                 self.progress["percentage"] = self._current_progress(ms, self.duration)
-                self.progress["remaining"] = self._remaining_time(ms, self.duration, self.progress["speed"])
+                self.progress["remaining_time"] = self._remaining_time(ms, self.duration, self.progress["speed"])
             except Exception as e:
                 self.progress["percentage"] = None
-                self.progress["remaining"] = None
+                self.progress["remaining_time"] = None
 
             if self.progress["progress"] in ["end", "stop"]:
                 self.report = self.progress
