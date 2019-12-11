@@ -1,6 +1,8 @@
 from collections import deque
 import pickle
 
+stop = False
+
 paused_pickle = "paused_pickle.pkl"
 try:
     with open(paused_pickle, "rb") as f:

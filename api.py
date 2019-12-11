@@ -31,7 +31,7 @@ def job():
 
 @app.route("/stop", methods=["POST"])
 def stop():
-    os.kill(os.getpid(), signal.SIGUSR1)
+    globals.stop = True
     return Response(status=200)
 
 def run():
