@@ -1,4 +1,4 @@
-import re, signal, pexpect
+import re, signal, pexpect, datetime, globals
 from pydoc import locate
 
 
@@ -37,21 +37,36 @@ class FFmpeg:
         self._finished = False
         self._pause = False
         self.report = None
+        self._elapsed = []
 
     def start(self):
         self._p = pexpect.spawn(self.cmd)
+        self._elapsed.append([datetime.datetime.now(), None])
         self._get_duration()
         self.exp_list = self._p.compile_pattern_list([pexpect.EOF, "(.+)"])
 
     def pause(self):
+        self._elapsed[-1][1] = datetime.datetime.now()
         self._p.kill(signal.SIGSTOP)
 
     def resume(self):
+        self._elapsed.append([datetime.datetime.now(), None])
         self._p.kill(signal.SIGCONT)
 
     def stop(self):
+        self._p.kill(signal.SIGINT)
+
+    def _stop(self):
         self._p.close()
-        # self._finished = True
+        self._elapsed[-1][1] = datetime.datetime.now()
+
+        self.report["elapsed_time"] = datetime.timedelta(0)
+        for times in self._elapsed:
+            self.report["elapsed_time"] += times[1] - times[0]
+        self.report["elapsed_time"] = str(self.report["elapsed_time"])
+
+
+
 
     def has_finished(self):
         return self._finished
@@ -88,15 +103,10 @@ class FFmpeg:
         i = self._p.expect_list(self.exp_list)
         if i == 0:
             self._finished = True
-            self.stop()
+            self._stop()
         else:
             out = self._p.match.group(i)
             self.progress = self.auto_cast(out)
-            try:
-                if self.progress["progress"] in ["end", "stop"]:
-                    self.report = self.progress
-            except:
-                pass
             try:
                 ms = hhmmssms_to_ms(self.progress["out_time"])
                 self.progress["percentage"] = self._current_progress(ms, self.duration)
@@ -104,6 +114,10 @@ class FFmpeg:
             except Exception as e:
                 self.progress["percentage"] = None
                 self.progress["remaining"] = None
+
+            if self.progress["progress"] in ["end", "stop"]:
+                self.report = self.progress
+
         return self.progress
 
 
