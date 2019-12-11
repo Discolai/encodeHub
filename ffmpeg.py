@@ -58,15 +58,15 @@ class FFmpeg:
 
     def _stop(self):
         self._p.close()
+
         self._elapsed[-1][1] = datetime.datetime.now()
+        self.report["elapsed_time"] = self.get_elapsed_time()
 
-        self.report["elapsed_time"] = datetime.timedelta(0)
+    def get_elapsed_time(self):
+        elapsed = datetime.timedelta(0)
         for times in self._elapsed:
-            self.report["elapsed_time"] += times[1] - times[0]
-        self.report["elapsed_time"] = str(self.report["elapsed_time"])
-
-
-
+            elapsed += (times[1] if times[1] else datetime.datetime.now()) - times[0]
+        return str(elapsed)
 
     def has_finished(self):
         return self._finished
@@ -117,6 +117,8 @@ class FFmpeg:
 
             if self.progress["progress"] in ["end", "stop"]:
                 self.report = self.progress
+
+            self.progress["elapsed_time"] = self.get_elapsed_time()
 
         return self.progress
 
