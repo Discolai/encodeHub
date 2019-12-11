@@ -71,7 +71,6 @@ def oldest():
 
     cur.execute("select jid, job, MIN(timestamp) as timestamp from jobs where nid is null;")
     job = dict(cur.fetchall()[0])
-    print(job)
 
     if not job or not job["jid"]:
         return jsonify({"err": "Job queue is empty!"}), 404
@@ -109,6 +108,8 @@ def get_logs(node):
 
 @app.route("/logs/<node>", methods=["POST"])
 def post_log(node):
+    cur = get_db().cursor()
+    
     # Get the node's id
     cur.execute("select nid from nodes where name = ?;", (node,))
     nid = dict(cur.fetchall()[0])["nid"]
