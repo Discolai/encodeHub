@@ -9,17 +9,23 @@ class FFmpeg:
     """docstring for FFmpeg."""
 
     formats = {
-        "frame": (re.compile(b"frame=(?P<frame>.+)"), "int"),
-        "fps": (re.compile(b"fps=(?P<fps>.+)"), "float"),
-        "stream": (re.compile(b"stream.+=(?P<stream>.+)"), "str"),
-        "bitrate": (re.compile(b"bitrate=(?P<bitrate>.+)kbits/s"), "float"),
-        "total_size": (re.compile(b"total_size=(?P<total_size>.+)"), "int"),
-        "out_time_ms": (re.compile(b"out_time_ms=(?P<out_time_ms>.+)"), "int"),
-        "out_time": (re.compile(b"out_time=(?P<out_time>.+)"), "str"),
-        "dup_frames": (re.compile(b"dup_frames=(?P<dup_frames>.+)"), "int"),
-        "drop_frames": (re.compile(b"drop_frames=(?P<drop_frames>.+)"), "int"),
-        "speed": (re.compile(b"speed=(?P<speed>.+)x"), "float"),
-        "progress":(re.compile(b"progress=(?P<progress>.+)"), "str")
+        "frame": (re.compile(b"frame=[ ]*(?P<frame>\\d+)"), "int"),
+        "fps": (re.compile(b"fps=[ ]*(?P<fps>[\\d\\.]+)"), "float"),
+        "stream": (re.compile(b"stream.+=[ ]*(?P<stream>[-\\d\\.]+)"), "str"),
+        "bitrate": (re.compile(b"bitrate=[ ]*(?P<bitrate>[\\d\\.]+)kbits\\/s"), "float"),
+        "total_size": (re.compile(b"total_size=[ ]*(?P<total_size>\\d+)"), "int"),
+        "out_time_ms": (re.compile(b"out_time_ms=[ ]*(?P<out_time_ms>\\d+)"), "int"),
+        "out_time": (re.compile(b"out_time=[ ]*(?P<out_time>\\d{2}:\\d{2}:\\d{2}\\.\\d{6})"), "str"),
+        "dup_frames": (re.compile(b"dup_frames=[ ]*(?P<dup_frames>\d+)"), "int"),
+        "drop_frames": (re.compile(b"drop_frames=[ ]*(?P<drop_frames>\d+)"), "int"),
+        "speed": (re.compile(b"speed=[ ]*(?P<speed>[\\d\\.]+)x"), "float"),
+        "progress":(re.compile(b"progress=[ ]*(?P<progress>\\w+)"), "str"),
+        "video": (re.compile(b"video[ ]*:[ ]*(?P<video>\\d+)"), "int"),
+        "audio": (re.compile(b"audio[ ]*:[ ]*(?P<audio>\\d+)"), "int"),
+        "subtitle": (re.compile(b"subtitle[ ]*:[ ]*(?P<subtitle>\\d+)"), "int"),
+        "other_streams": (re.compile(b"other streams[ ]*:[ ]*(?P<other_streams>\\d+)"), "int"),
+        "global_headers": (re.compile(b"global headers[ ]*:[ ]*(?P<global_headers>\\d+)"), "int"),
+        "muxing_overhead": (re.compile(b"muxing overhead[ ]*:[ ]*(?P<muxing_overhead>[\\d\\.]+)%"), "float"),
     }
 
 
@@ -42,8 +48,9 @@ class FFmpeg:
     def resume(self):
         self._p.kill(signal.SIGCONT)
 
-    def kill(self):
-        self._p.kill(signal.SIGINT)
+    def stop(self):
+        self._p.close()
+        self._finished = True
 
     def has_finished(self):
         return self._finished
@@ -69,10 +76,7 @@ class FFmpeg:
                 if v[1] == "str":
                     res[key] = match.group(key).strip().decode("utf-8")
                 else:
-                    try:
-                        res[key] = locate(v[1])(match.group(key).strip())
-                    except:
-                        res[key] = None
+                    res[key] = locate(v[1])(match.group(key).strip())
             else:
                 res[key] = None
 
@@ -88,8 +92,10 @@ class FFmpeg:
             self.progress = self.auto_cast(out)
             try:
                 if self.progress["progress"] in ["end", "stop"]:
-                    self._p.kill(signal.SIGINT)
-            except Exception as e:
+                    self.stop()
+                    print(out)
+                    print(self.progress)
+            except:
                 pass
             try:
                 ms = hhmmssms_to_ms(self.progress["out_time"])
