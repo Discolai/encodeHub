@@ -1,53 +1,47 @@
-import os, json, re, subprocess
+import os, json, re, sqlite3, pexpect, sys
 
 class VideoInfo:
     """docstring for VideoInfo."""
 
     def __init__(self, config):
         self.config = config
+        self.cmd = " ".join(["ffprobe", *config["ffprobe"]["args"]])
 
     def analyze_video(self, video):
-        pass
+        p = pexpect.spawn(self.cmd + " \"{}\"".format(video))
+        codec = p.readline().strip().decode("utf-8")
+        p.close()
+        return codec
 
-    def analyze_videos(self, dir):
-        videos = self._get_videos(dir)
-
-        with open(self.config["queue"]) as f:
-            q = json.loads(f.read())
-
-        for video in videos:
-            repr = self.analyze_video(video)
-            if repr["codec"] not in self.config["wanted"]:
-                q.append(video)
-
-
-        with open(self.config["queue"], "w") as f:
-            json.dump(q, f)
-
-    def _get_videos(self, dir):
-        res = []
+    def analyze_directory(self, dir):
+        db = sqlite3.connect(self.config["database"])
+        cur = db.cursor()
         for root, dirs, files in os.walk(dir):
             for file in files:
                 file = os.path.abspath(os.path.join(root, file))
 
                 match = re.search("\\.(\\w+)$", file)
                 if match and match.group(1) in self.config["extentions"]:
-                    res.append(file)
-        return res
+                    codec = self.analyze_video(file)
+                    if codec not in self.config["wanted"]:
+                        try:
+                            cur.execute("insert into jobs (job) values (?)", (file,))
+                            # print(file)
+                        except:
+                            pass
+        db.commit()
+        db.close()
+def main(dir):
+    if not os.path.isdir(dir):
+        raise FileNotFoundError()
 
-class TvSeriesInfo(VideoInfo):
-    """docstring for TvSeriesInfo."""
-
-    def analyze_video(self, video):
-        print(video)
-        return {"codec": subprocess.run(self.config["ffprobe"] + "\"%s\""%(video), stdout=subprocess.PIPE, shell=True).stdout.strip().decode("utf-8")}
-
-
-def main():
-    with open("config.json") as f:
+    with open("distributor_config.json") as f:
         config = json.load(f)
-    info = TvSeriesInfo(config)
-    info.analyze_videos("/mnt/Tv-series")
+    info = VideoInfo(config)
+    info.analyze_directory("/mnt/Tv-series/Barry")
 
 if __name__ == '__main__':
-    main()
+    if len(sys.argv) < 2:
+        print("Please specify a directory!")
+    else:
+        main(sys.argv[1])
