@@ -1,8 +1,9 @@
 from flask import Flask, Response, request, jsonify, g
-import json, shlex, sqlite3
+import json, shlex, sqlite3, requests, socket
 import globals
 
 DATABASE = "./db/jobs.db"
+PORT = 3000
 app = Flask(__name__)
 
 def get_db():
@@ -65,6 +66,7 @@ def oldest():
         return jsonify({"err": "No node specified!", "job": None}), 400
 
     cur.execute("select nid from nodes where name = ?;", (node["name"],))
+    # fix index out of range
     nid = dict(cur.fetchall()[0])["nid"]
     if not nid:
         return jsonify({"err": "Could not find node: {}".format(node["name"])}), 404
@@ -79,7 +81,7 @@ def oldest():
     return jsonify({"err": None, "job": job})
 
 @app.route("/nodes", methods=["GET"])
-def nodes():
+def get_nodes():
     cur = get_db().cursor()
     cur.execute("select * from nodes;")
     nodes = [dict(node) for node in cur.fetchall()]
@@ -88,6 +90,51 @@ def nodes():
     else:
         return jsonify({"err": "No nodes registered!", "nodes": None}), 404
 
+@app.route("/nodes", methods=["POST"])
+def create_node():
+    body = request.get_json()
+
+    if not all(key in ["name", "address"] for key in body):
+        return jsonify({"err": "Please specify a name and an address!", "node": None}), 400
+
+    cur = get_db().cursor()
+    try:
+        cur.execute("insert into nodes (name, address) values (?,?);", (body["name"], body["address"]))
+    except Exception as e:
+        return jsonify({"err": str(e), "node": None})
+
+    return jsonify({
+            "err": None,
+            "node": {"nid": cur.lastrowid, "name": body["name"], "address": body["address"]}
+            })
+
+@app.route("/nodes/init/<nid>", methods=["POST"])
+def init_node(nid):
+    cur = get_db().cursor()
+    cur.execute("select * from nodes where nid=?;", (nid,))
+
+    if not cur.rowcount:
+        return jsonify({"err": "Invalid nid!"}), 400
+
+    node = dict(cur.fetchall()[0])
+    payload = {
+        "nid": node["nid"],
+        "name": node["name"],
+        "distributor": "http://{}:{}".format(get_ip_address(), PORT)
+    }
+    try:
+        r = requests.post(node["address"]+"/init", json=payload)
+    except Exception as e:
+        return jsonify({"err": "Unable to contact node!"}), 404
+    if r.status_code != 200:
+        return jsonify(r.text), r.status_code
+    return jsonify({"err": None}), 200
+
+
+def get_ip_address():
+    s = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
+    s.connect(("8.8.8.8", 80))
+    return s.getsockname()[0]
 
 @app.route("/logs/<node>", methods=["GET"])
 def get_logs(node):
@@ -109,7 +156,7 @@ def get_logs(node):
 @app.route("/logs/<node>", methods=["POST"])
 def post_log(node):
     cur = get_db().cursor()
-    
+
     # Get the node's id
     cur.execute("select nid from nodes where name = ?;", (node,))
     nid = dict(cur.fetchall()[0])["nid"]
@@ -135,7 +182,7 @@ def post_log(node):
 
 def main():
     from waitress import serve
-    serve(app, host="0.0.0.0", port=3000)
+    serve(app, host="0.0.0.0", port=PORT)
 
 if __name__ == '__main__':
     main()

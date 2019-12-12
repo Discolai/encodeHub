@@ -1,5 +1,8 @@
 from collections import deque
-import pickle
+import pickle, json
+
+with open("node_config.json", "r") as f:
+    config = json.load(f)
 
 stop = False
 

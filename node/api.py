@@ -1,7 +1,41 @@
 from flask import Flask, Response, request, jsonify
+from marshmallow import Schema, fields
+from marshmallow.validate import Length, Range
 import json, shlex, os, globals, signal
 
 app = Flask(__name__)
+
+class InitNodeSchema(Schema):
+    nid = fields.Int(required=True)
+    name = fields.Str(required=True, validate=Length(max=255))
+    distributor = fields.Str(required=True, validate=Length(max=255))
+
+def validate_schema(schema):
+    try:
+        err = schema.validate(request.json)
+        if err:
+            return jsonify({"err": err}), 400
+    except Exception as e:
+        return jsonify({"err": "Invalid json!", "e": str(e)}), 400
+
+@app.route("/config", methods=["GET"])
+def get_config():
+    return jsonify({"err": None, "config": globals.config}), 200
+
+
+@app.route("/init", methods=["POST"])
+def init_node():
+    res = validate_schema(InitNodeSchema())
+    if res:
+        return res
+
+    init = {attr:request.json[attr] for attr in ["nid", "name", "distributor"]}
+    globals.config = {**globals.config, **init}
+    with open("node_config.json", "w") as f:
+        json.dump(globals.config, f)
+
+    return jsonify({"err": None})
+
 
 @app.route("/enque", methods=["POST"])
 def enque():
@@ -43,6 +77,7 @@ def progress():
 def pause():
     globals.paused = not globals.paused
     return jsonify({"err": None, "paused": globals.paused}), 200
+
 
 @app.route("/stop", methods=["POST"])
 def stop():

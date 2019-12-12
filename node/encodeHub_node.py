@@ -37,14 +37,14 @@ def send_report(distributor, name, log):
     else:
         return True
 
-def handle_job(j, config):
+def handle_job(j):
 
     print("Got job: ", j["job"])
 
     input = "\"%s\""%(j["job"])
     output = "\"%shevc.mkv\""%(j["job"][:-3])
 
-    job = FFmpeg(config["ffmpeg"]["inargs"], input, config["ffmpeg"]["outargs"], output)
+    job = FFmpeg(globals.config["ffmpeg"]["inargs"], input, globals.config["ffmpeg"]["outargs"], output)
 
     job.start()
 
@@ -57,7 +57,7 @@ def handle_job(j, config):
         if globals.paused:
             job.pause()
             while globals.paused and not globals.stop:
-                time.sleep(config["sleeptime"])
+                time.sleep(globals.config["sleeptime"])
             globals.paused = False
             job.resume()
 
@@ -67,29 +67,17 @@ def handle_job(j, config):
         if len(globals.progress_q) > 1:
             globals.progress_q.popleft()
 
-    send_report(config["distributor"], config["name"], job.report.copy())
+    send_report(globals.config["distributor"], globals.config["name"], job.report.copy())
     globals.progress_q.appendleft(job.report.copy())
 
-def main(name=None):
-    if name:
-        with open("node_config.json", "r") as f:
-            config = json.load(f)
-        config["name"] = name
-        with open("node_config.json", "w") as f:
-            json.dump(config, f)
-
-
+def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
     api_thread.start()
     while True:
-        # Reload the config for each new job
-        with open("node_config.json", "r") as f:
-            config = json.load(f)
-
         while len(globals.job_q) == 0:
-            r = request_job(config["distributor"], config["name"])
+            r = request_job(globals.config["distributor"], globals.config["name"])
             if not r:
-                time.sleep(config["sleeptime"])
+                time.sleep(globals.config["sleeptime"])
             else:
                 globals.job_q.append(r)
 
@@ -97,7 +85,7 @@ def main(name=None):
         try:
             globals.stop = False
             j = globals.job_q.popleft()
-            handle_job(j, config)
+            handle_job(j)
         except Exception as e:
             globals.job_q.appendleft(j)
             raise e
@@ -107,19 +95,18 @@ def main(name=None):
 
 
 if __name__ == '__main__':
-    # try:
-    if len(sys.argv) > 1:
-        main(sys.argv[1])
-    else:
+    try:
         main()
-    # except Exception as e:
-    #     print("Intercepted exception: ", e)
-    # except:
-    #     print("Intercepted KeyboardInterrupt")
-    # finally:
-    #     with open(globals.progress_q_pickle, "wb") as f:
-    #         pickle.dump(globals.progress_q, f)
-    #     with open(globals.job_q_pickle, "wb") as f:
-    #         pickle.dump(globals.job_q, f)
-    #     with open(globals.paused_pickle, "wb") as f:
-    #         pickle.dump(globals.paused, f)
+    except Exception as e:
+        print("Intercepted exception: ", e)
+    except:
+        print("Intercepted KeyboardInterrupt")
+    finally:
+        with open(globals.progress_q_pickle, "wb") as f:
+            pickle.dump(globals.progress_q, f)
+        with open(globals.job_q_pickle, "wb") as f:
+            pickle.dump(globals.job_q, f)
+        with open(globals.paused_pickle, "wb") as f:
+            pickle.dump(globals.paused, f)
+        with open("node_config.json", "w") as f:
+            config = json.dump(globals.config, f)
