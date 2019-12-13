@@ -1,9 +1,4 @@
-from flask import Flask, Response, request, jsonify
-
-from marshmallow import Schema, fields, post_load
-from marshmallow.validate import Length
-
-import json, shlex, os, globals, signal
+from flask import Flask
 
 app = Flask(__name__)
 
@@ -16,17 +11,7 @@ app.register_blueprint(job_bp, url_prefix="/job")
 from api.config import config_bp
 app.register_blueprint(config_bp, url_prefix="/config")
 
-
-from werkzeug.exceptions import BadRequest
-from marshmallow.exceptions import ValidationError
-
-@app.errorhandler(BadRequest)
-def handle_bad_request(e):
-    return jsonify({"err": e.name}), 400
-
-@app.errorhandler(ValidationError)
-def handle_validation_error(e):
-    return jsonify({"err": e.messages}), 400
+import api.error_handlers
 
 def run():
     from waitress import serve
