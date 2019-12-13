@@ -13,6 +13,9 @@ app.register_blueprint(queue_bp, url_prefix="/queue")
 from api.job import job_bp
 app.register_blueprint(job_bp, url_prefix="/job")
 
+from api.config import config_bp
+app.register_blueprint(config_bp, url_prefix="/config")
+
 
 from werkzeug.exceptions import BadRequest
 from marshmallow.exceptions import ValidationError
@@ -24,34 +27,6 @@ def handle_bad_request(e):
 @app.errorhandler(ValidationError)
 def handle_validation_error(e):
     return jsonify({"err": e.messages}), 400
-
-class SetupSchema(Schema):
-    nid = fields.Int(required=True)
-    name = fields.Str(required=True, validate=Length(max=255))
-    distributor = fields.Str(required=True, validate=Length(max=255))
-
-    @post_load
-    def load_setup(self, data, **kwargs):
-        return {
-            "nid": data["nid"],
-            "name": data["name"],
-            "distributor": data["distributor"]
-        }
-
-@app.route("/config", methods=["GET"])
-def get_config():
-    return jsonify({"err": None, "config": globals.config}), 200
-
-
-@app.route("/setup", methods=["POST"])
-def setup_node():
-    setup = SetupSchema().load(request.json)
-
-    globals.config = {**globals.config, **setup}
-    with open("node_config.json", "w") as f:
-        json.dump(globals.config, f)
-
-    return jsonify({"err": None})
 
 def run():
     from waitress import serve
