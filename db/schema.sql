@@ -1,6 +1,7 @@
-drop table jobs;
-drop table nodes;
-drop table logs;
+drop table IF EXISTS jobs;
+drop table IF EXISTS nodes;
+drop table IF EXISTS logs;
+drop table IF EXISTS scans;
 
 CREATE TABLE IF NOT EXISTS jobs (
   jid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
@@ -37,4 +38,11 @@ CREATE TABLE IF NOT EXISTS logs (
   other_streams INTEGER NOT NULL,
   total_size INTEGER NOT NULL,
   muxing_overhead FLOAT NOT NULL
+);
+
+CREATE TABLE IF NOT EXISTS scans (
+  sid INTEGER NOT NULL PRIMARY KEY AUTOINCREMENT,
+  dir VARCHAR(255) NOT NULL,
+  start DATETIME NOT NULL DEFAULT CURRENT_TIMESTAMP,
+  stop DATETIME DEFAULT NULL
 );

@@ -12,6 +12,6 @@
     "mkv",
     "mp4"
   ],
-  "database": "./db/jobs.db",
+  "database": "/home/nikolai/Documents/encodeHub/db/jobs.db",
   "api_port": 3000
 }

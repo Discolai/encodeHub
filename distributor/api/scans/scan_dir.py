@@ -1,10 +1,11 @@
 import os, json, re, sqlite3, pexpect, sys
+from api import config
 
 class VideoInfo:
-    """docstring for VideoInfo."""
-
-    def __init__(self, config):
+    def __init__(self, sid, config):
+        self.sid = sid
         self.config = config
+        self.db = sqlite3.connect(self.config["database"])
         self.cmd = " ".join(["ffprobe", *config["ffprobe"]["args"]])
 
     def analyze_video(self, video):
@@ -14,8 +15,7 @@ class VideoInfo:
         return codec
 
     def analyze_directory(self, dir):
-        db = sqlite3.connect(self.config["database"])
-        cur = db.cursor()
+        cur = self.db.cursor()
         for root, dirs, files in os.walk(dir):
             for file in files:
                 file = os.path.abspath(os.path.join(root, file))
@@ -26,22 +26,15 @@ class VideoInfo:
                     if codec not in self.config["wanted"]:
                         try:
                             cur.execute("insert into jobs (job) values (?)", (file,))
-                            # print(file)
                         except:
                             pass
-        db.commit()
-        db.close()
-def main(dir):
-    if not os.path.isdir(dir):
-        raise FileNotFoundError()
+    def cleanup(self):
+        cur = self.db.cursor()
+        cur.execute("update scans set stop = CURRENT_TIMESTAMP where sid = ?;", (self.sid,))
+        self.db.commit()
+        self.db.close()
 
-    with open("distributor_config.json") as f:
-        config = json.load(f)
-    info = VideoInfo(config)
-    info.analyze_directory("/mnt/Tv-series/Barry")
-
-if __name__ == '__main__':
-    if len(sys.argv) < 2:
-        print("Please specify a directory!")
-    else:
-        main(sys.argv[1])
+def run(sid, dir):
+    info = VideoInfo(sid, config)
+    info.analyze_directory(dir)
+    info.cleanup()
