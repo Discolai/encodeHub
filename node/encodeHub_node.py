@@ -64,6 +64,8 @@ def handle_job(j):
 
     send_report(job.report.copy())
     api.progress_q.appendleft(job.report.copy())
+    if config["delete_complete"]:
+        os.remove(j["job"])
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
