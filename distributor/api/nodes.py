@@ -32,8 +32,8 @@ def delete_node(nid):
     cur.execute("delete from nodes where nid = ?;", (nid,))
     return Response()
 
-@nodes_bp.route("/init/<int:nid>", methods=["POST"])
-def init_node(nid):
+@nodes_bp.route("/setup/<int:nid>", methods=["POST"])
+def setup_node(nid):
     cur = get_db().cursor()
     cur.execute("select * from nodes where nid=?;", (nid,))
 
