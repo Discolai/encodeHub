@@ -28,6 +28,7 @@ CREATE TABLE IF NOT EXISTS logs (
   stream VARCHAR(10) NOT NULL,
   elapsed_time DATETIME NOT NULL,
   out_time DATETIME NOT NULL,
+  out_time_ms INTEGER NOT NULL,
   remaining_time DATETIME NOT NULL,
   percentage INTEGER NOT NULL,
   progress VARCHAR(10) NOT NULL,

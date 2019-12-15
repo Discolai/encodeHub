@@ -15,6 +15,7 @@ class LogSchema(Schema):
     stream = fields.Str(required=True, validate=Length(max=10))
     elapsed_time = fields.Str(required=True)
     out_time = fields.Str(required=True)
+    out_time_ms = fields.Int(required=True)
     remaining_time = fields.Str(required=True)
     percentage = fields.Int(required=True)
     progress = fields.Str(required=True, validate=Length(max=10))
