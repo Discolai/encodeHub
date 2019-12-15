@@ -1,20 +1,16 @@
 import json, time
 import threading
 import api
-import globals
 import pickle
 import requests
 import signal
 import sys
 from ffmpeg import FFmpeg
 
-def request_job(distributor, name):
+def request_job():
     try:
-        r = requests.put(distributor+"/jobs/oldest", json={"name":name})
+        r = requests.put(api.config["distributor"]+"/jobs/oldest", json={"nid":api.config["nid"]})
     except:
-        return None
-
-    if r.status_code != 200:
         return None
 
     body = json.loads(r.text)
@@ -22,11 +18,11 @@ def request_job(distributor, name):
         print(body["err"])
         return None
     else:
-        return body["job"]
+        return body["data"]
 
-def send_report(distributor, name, log):
+def send_report(log):
     try:
-        r = requests.post(distributor+"/logs/"+name, json=log)
+        r = requests.post("{}/logs/{}".format(api.config["distributor"], api.config["nid"]), json=log)
     except Exception as e:
         return False
 
@@ -38,59 +34,59 @@ def send_report(distributor, name, log):
         return True
 
 def handle_job(j):
-
     print("Got job: ", j["job"])
 
     input = "\"%s\""%(j["job"])
     output = "\"%shevc.mkv\""%(j["job"][:-3])
 
-    job = FFmpeg(globals.config["ffmpeg"]["inargs"], input, globals.config["ffmpeg"]["outargs"], output)
+    job = FFmpeg(api.config["ffmpeg"]["inargs"], input, api.config["ffmpeg"]["outargs"], output)
 
     job.start()
 
     while not job.has_finished():
-        if globals.stop:
+        if api.stop:
             print("Stopping job: ", j["job"])
             job.stop()
-            globals.stop = False
+            api.stop = False
 
-        if globals.paused:
+        if api.paused:
             job.pause()
-            while globals.paused and not globals.stop:
-                time.sleep(globals.config["sleeptime"])
-            globals.paused = False
+            while api.paused and not api.stop:
+                time.sleep(api.config["sleeptime"])
+            api.paused = False
             job.resume()
 
         progress = job.read_progress().copy()
-        progress["paused"] = globals.paused
-        globals.progress_q.append(progress)
-        if len(globals.progress_q) > 1:
-            globals.progress_q.popleft()
+        progress["paused"] = api.paused
+        progress = {**progress, **j}
+        api.progress_q.append(progress)
+        if len(api.progress_q) > 1:
+            api.progress_q.popleft()
 
-    send_report(globals.config["distributor"], globals.config["name"], job.report.copy())
-    globals.progress_q.appendleft(job.report.copy())
+    send_report(job.report.copy())
+    api.progress_q.appendleft(job.report.copy())
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
     api_thread.start()
     while True:
-        while len(globals.job_q) == 0:
-            r = request_job(globals.config["distributor"], globals.config["name"])
+        while len(api.job_q) == 0:
+            r = request_job()
             if not r:
-                time.sleep(globals.config["sleeptime"])
+                time.sleep(api.config["sleeptime"])
             else:
-                globals.job_q.append(r)
+                api.job_q.append(r)
 
 
         try:
-            globals.stop = False
-            j = globals.job_q.popleft()
+            api.stop = False
+            j = api.job_q.popleft()
             handle_job(j)
         except Exception as e:
-            globals.job_q.appendleft(j)
+            api.job_q.appendleft(j)
             raise e
         except:
-            globals.job_q.appendleft(j)
+            api.job_q.appendleft(j)
             raise KeyboardInterrupt()
 
 
@@ -102,11 +98,11 @@ if __name__ == '__main__':
     except:
         print("Intercepted KeyboardInterrupt")
     finally:
-        with open(globals.progress_q_pickle, "wb") as f:
-            pickle.dump(globals.progress_q, f)
-        with open(globals.job_q_pickle, "wb") as f:
-            pickle.dump(globals.job_q, f)
-        with open(globals.paused_pickle, "wb") as f:
-            pickle.dump(globals.paused, f)
+        with open(api.progress_q_pickle, "wb") as f:
+            pickle.dump(api.progress_q, f)
+        with open(api.job_q_pickle, "wb") as f:
+            pickle.dump(api.job_q, f)
+        with open(api.paused_pickle, "wb") as f:
+            pickle.dump(api.paused, f)
         with open("node_config.json", "w") as f:
-            config = json.dump(globals.config, f)
+            config = json.dump(api.config, f)

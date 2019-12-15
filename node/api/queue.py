@@ -2,7 +2,7 @@ from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length
 
-import globals
+import api
 
 queue_bp = Blueprint("queue", __name__)
 
@@ -23,20 +23,20 @@ class JobSchema(Schema):
 def enque():
     nj = JobSchema().load(request.json)
 
-    globals.job_q.append(nj)
+    api.job_q.append(nj)
     return jsonify({"err": None})
 
 @queue_bp.route("/", methods=["DELETE"])
 def deque():
     try:
-        job = globals.job_q.popleft()
+        job = api.job_q.popleft()
         return jsonify({"err": None, "job": job}), 200
     except:
         return jsonify({"err": "Job queue is empty", "job": None}), 404
 
 @queue_bp.route("/", methods=["GET"])
 def get_queue():
-    jobs = list(globals.job_q)
+    jobs = list(api.job_q)
     if len(jobs):
         return jsonify({"err": None, "jobs": jobs}), 200
     else:

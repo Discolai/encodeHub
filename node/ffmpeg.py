@@ -1,4 +1,4 @@
-import re, signal, pexpect, datetime, globals
+import re, signal, pexpect, datetime
 from pydoc import locate
 
 
