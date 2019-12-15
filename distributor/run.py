@@ -1,11 +1,9 @@
-from api import app
+from api import app, config
 import api.error_handlers
-
-PORT = 3000
 
 def main():
     from waitress import serve
-    serve(app, host="0.0.0.0", port=PORT)
+    serve(app, host="0.0.0.0", port=config["api_port"])
 
 if __name__ == '__main__':
     main()

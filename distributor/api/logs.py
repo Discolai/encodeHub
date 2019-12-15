@@ -1,49 +1,65 @@
 from flask import Flask, Response, request, jsonify, Blueprint
-
+from marshmallow import Schema, fields, post_load
+from marshmallow.validate import Length
 from api.db import get_db
 
-blu = Blueprint("logs", __name__)
+logs_blu = Blueprint("logs", __name__)
 
-@blu.route("/logs/<node>", methods=["GET"])
-def get_logs(node):
+class LogSchema(Schema):
+    frame = fields.Int(required=True)
+    fps = fields.Float(required=True)
+    speed = fields.Float(required=True)
+    bitrate = fields.Float(required=True)
+    drop_frames = fields.Int(required=True)
+    dup_frames = fields.Int(required=True)
+    stream = fields.Str(required=True, validate=Length(max=10))
+    elapsed_time = fields.Str(required=True)
+    out_time = fields.Str(required=True)
+    remaining_time = fields.Str(required=True)
+    percentage = fields.Int(required=True)
+    progress = fields.Str(required=True, validate=Length(max=10))
+    video = fields.Int(required=True)
+    audio = fields.Int(required=True)
+    subtitle = fields.Int(required=True)
+    global_headers = fields.Int(required=True)
+    other_streams = fields.Int(required=True)
+    total_size = fields.Int(required=True)
+    muxing_overhead = fields.Float(required=True)
+
+
+@logs_blu.route("/", methods=["GET"])
+def get_logs():
     cur = get_db().cursor()
-    sql = (
-        "select * from logs as l"
-        "join (select * from nodes where name = ?)"
-        " as n on l.node = n.id;"
-    )
-    cur.execute("select * from logs natural join (select * from nodes where name = ?)", (node,))
+    cur.execute("select * from logs;")
     logs = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": logs})
 
-    if len(logs):
-        return jsonify({"err": None, "logs": logs}), 200
-    else:
-        return jsonify({"err": "{} has no logs".format(node), "logs": None}), 404
-
-
-@blu.route("/logs/<node>", methods=["POST"])
-def post_log(node):
+@logs_blu.route("/<int:lid>", methods=["DELETE"])
+def delete_log(lid):
     cur = get_db().cursor()
+    cur.execute("delete from logs where lid = ?;", (lid,))
+    return Response(), 204
 
-    # Get the node's id
-    cur.execute("select nid from nodes where name = ?;", (node,))
-    nid = dict(cur.fetchall()[0])["nid"]
-    if not nid:
-        return jsonify({"err": "Could not find node: {}".format(node)}), 404
-    l = request.get_json()
-    args = (
-        nid, l["frame"], l["fps"], l["speed"], l["bitrate"], l["drop_frames"],
-        l["dup_frames"], l["stream"], l["elapsed_time"], l["out_time"],
-        l["remaining_time"], l["percentage"], l["progress"], l["video"],
-        l["audio"], l["subtitle"], l["global_headers"], l["other_streams"],
-        l["total_size"], l["muxing_overhead"]
-    )
-    sql = (
-        "insert into logs "
-        "(nid, frame, fps, speed, bitrate, drop_frames, dup_frames, stream,"
-        "elapsed_time, out_time, remaining_time, percentage, progress,"
-        "video, audio, subtitle, global_headers, other_streams, total_size, muxing_overhead) "
-        "values (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?);"
-    )
-    cur.execute(sql, args)
-    return jsonify({"err": None}), 200
+@logs_blu.route("/node/<int:nid>", methods=["GET"])
+def get_logs_for(nid):
+    cur = get_db().cursor()
+    cur.execute("select * from (select * from nodes where nid = ?) natural join logs;", (nid,))
+    logs = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": logs})
+
+@logs_blu.route("/node/<int:nid>", methods=["POST"])
+def post_log_for(nid):
+    log = LogSchema().load(request.json)
+
+    cur = get_db().cursor()
+    params = "nid"
+    vals = "?"
+    args = [nid]
+    for key, val in log.items():
+        params += ",{}".format(key)
+        vals += ",?"
+        args.append(val)
+
+    sql = "insert into logs ({}) values ({});".format(params, vals)
+    cur.execute(sql, tuple(args))
+    return Response(), 201

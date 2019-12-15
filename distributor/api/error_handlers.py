@@ -2,6 +2,8 @@ from api import app
 from flask import jsonify
 from werkzeug.exceptions import BadRequest, HTTPException
 from marshmallow.exceptions import ValidationError
+from sqlite3 import IntegrityError
+
 
 @app.errorhandler(BadRequest)
 def handle_bad_request(e):
@@ -11,6 +13,10 @@ def handle_bad_request(e):
 def handle_validation_error(e):
     return jsonify({"err": e.messages, "data": None}), 400
 
+@app.errorhandler(IntegrityError)
+def handle_integrity_error(e):
+    return jsonify({"err": str(e), "data": None}), 403
+
 @app.errorhandler(Exception)
 def handle_error(e):
-    return jsonify({"err": str(e)}), 500 if not isinstance(e, HTTPException) else e.code
+    return jsonify({"err": str(e), "data": None}), 500 if not isinstance(e, HTTPException) else e.code

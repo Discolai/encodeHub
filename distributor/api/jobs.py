@@ -1,67 +1,67 @@
 from flask import Flask, Response, request, jsonify, Blueprint
-import json
+from marshmallow import Schema, fields, post_load
+from marshmallow.validate import Length
 
 from api.db import get_db
 
-blu = Blueprint("jobs", __name__)
+jobs_bp = Blueprint("jobs", __name__)
+
+class JobSchema(Schema):
+    job = fields.Str(required=True, validate=Length(max=255, min=5))
+
+    @post_load
+    def load_queue(self, data, **kwargs):
+        return {
+            "job": data["job"],
+        }
+
+class NodeSchema(Schema):
+    nid = fields.Int(required=True)
+
+    @post_load
+    def load_node(self, data, **kwargs):
+        return {
+            "nid": data["nid"]
+        }
 
 
-@blu.route("/jobs", methods=["GET"])
+
+@jobs_bp.route("/", methods=["GET"])
 def get_jobs():
     cur = get_db().cursor()
 
     cur.execute("select * from jobs;")
     jobs = [dict(job) for job in cur.fetchall()]
-    if len(jobs):
-        return jsonify({"err": None, "jobs": jobs}), 200
-    else:
-        return jsonify({"err": "Job queue is empty!", "jobs": None}), 404
+    return jsonify({"err": None, "data": jobs}), 200
 
-@blu.route("/jobs", methods=["POST"])
+
+@jobs_bp.route("/", methods=["POST"])
 def post_jobs():
-    cur = get_db().cursor()
-    jobs = request.get_json()
-    if isinstance(jobs, list):
-        for job in jobs:
-            if isinstance(job, str):
-                try:
-                    cur.execute("insert into jobs (job) values (?)", (job,))
-                except Exception as e:
-                    return jsonify({"err": "Duplicate job entry {}".format(job)}), 400
-            else:
-                return jsonify({"err": "{} is an invalid job!".format(job)}), 400
-        return jsonify({"err": None}), 200
-    else:
-        return jsonify({"err": "Wrong json formatting, expected array!"}), 400
+    jobs = JobSchema(many=True).load(request.json)
+    if not len(jobs):
+        return jsonify({"err": "Empty request!"}), 400
 
-@blu.route("/jobs/<jid>", methods=["DELETE"])
+    cur = get_db().cursor()
+    for job in jobs:
+        cur.execute("insert into jobs (job) values (?)", (job["job"],))
+    return Response(), 201
+
+@jobs_bp.route("/<int:jid>", methods=["DELETE"])
 def delete_jobs(jid):
     cur = get_db().cursor()
-    try:
-        cur.execute("delete from jobs where jid=(?);", (jid,))
-        return jsonify({"err": None}), 200
-    except Exception as e:
-        return jsonify({"err": str(e)}), 400
+    cur.execute("delete from jobs where jid=(?);", (jid,))
+    return Response(), 204
 
-@blu.route("/jobs/oldest", methods=["PUT"])
+@jobs_bp.route("/oldest", methods=["PUT"])
 def oldest_job():
+    node = NodeSchema().load(request.json)
+
     cur = get_db().cursor()
-
-    node = request.get_json()
-    if "name" not in node:
-        return jsonify({"err": "No node specified!", "job": None}), 400
-
-    cur.execute("select nid from nodes where name = ?;", (node["name"],))
-    # fix index out of range
-    nid = dict(cur.fetchall()[0])["nid"]
-    if not nid:
-        return jsonify({"err": "Could not find node: {}".format(node["name"])}), 404
 
     cur.execute("select jid, job, MIN(timestamp) as timestamp from jobs where nid is null;")
     job = dict(cur.fetchall()[0])
 
-    if not job or not job["jid"]:
-        return jsonify({"err": "Job queue is empty!"}), 404
+    if job and job["jid"]:
+        cur.execute("update jobs set nid = ? where jid = ?;", (node["nid"], job["jid"]))
 
-    cur.execute("update jobs set nid = 1 where jid = ?;", (job["jid"],))
-    return jsonify({"err": None, "job": job})
+    return jsonify({"err": None, "data": job})
