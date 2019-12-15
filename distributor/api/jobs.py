@@ -1,7 +1,7 @@
 from flask import Flask, Response, request, jsonify, Blueprint
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, post_load, validates, ValidationError
 from marshmallow.validate import Length
-
+import os
 from api.db import get_db
 
 jobs_bp = Blueprint("jobs", __name__)
@@ -9,22 +9,14 @@ jobs_bp = Blueprint("jobs", __name__)
 class JobSchema(Schema):
     job = fields.Str(required=True, validate=Length(max=255, min=5))
 
-    @post_load
-    def load_queue(self, data, **kwargs):
-        return {
-            "job": data["job"],
-        }
+    @validates("job")
+    def validate_error(self, value):
+        if not os.path.isfile(value):
+            raise ValidationError("Job must be a file.")
+
 
 class NodeSchema(Schema):
     nid = fields.Int(required=True)
-
-    @post_load
-    def load_node(self, data, **kwargs):
-        return {
-            "nid": data["nid"]
-        }
-
-
 
 @jobs_bp.route("/", methods=["GET"])
 def get_jobs():
