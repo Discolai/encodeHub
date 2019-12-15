@@ -50,7 +50,7 @@ def oldest_job():
 
     cur = get_db().cursor()
 
-    cur.execute("select jid, job, MIN(timestamp) as timestamp from jobs where nid is null;")
+    cur.execute("select jid, job from jobs where nid is null order by timestamp limit 1;")
     job = dict(cur.fetchall()[0])
 
     if job and job["jid"]:
