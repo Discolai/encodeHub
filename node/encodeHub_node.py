@@ -5,30 +5,29 @@ import pickle
 import requests
 import signal
 import sys
+import os
 from ffmpeg import FFmpeg
 
 def request_job():
     try:
         r = requests.put(api.config["distributor"]+"/jobs/oldest", json={"nid":api.config["nid"]})
+        body = json.loads(r.text)
     except:
         return None
 
-    body = json.loads(r.text)
-    if body["err"]:
-        print(body["err"])
+    if body and body["err"]:
         return None
     else:
         return body["data"]
 
 def send_report(log):
     try:
-        r = requests.post("{}/logs/{}".format(api.config["distributor"], api.config["nid"]), json=log)
+        r = requests.post("{}/logs/node/{}".format(api.config["distributor"], api.config["nid"]), json=log)
+        body = json.loads(r.text)
     except Exception as e:
         return False
 
-    body = json.loads(r.text)
-    if body["err"]:
-        print(body["err"])
+    if body and body["err"]:
         return False
     else:
         return True
@@ -81,6 +80,8 @@ def main():
         try:
             api.stop = False
             j = api.job_q.popleft()
+            if not os.path.isfile(j["job"]):
+                continue
             handle_job(j)
         except Exception as e:
             api.job_q.appendleft(j)
