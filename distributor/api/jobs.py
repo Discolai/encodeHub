@@ -51,9 +51,9 @@ def oldest_job():
     cur = get_db().cursor()
 
     cur.execute("select jid, job from jobs where nid is null order by timestamp limit 1;")
-    job = dict(cur.fetchall()[0])
+    job = [dict(row) for row in cur.fetchall()]
 
-    if job and job["jid"]:
-        cur.execute("update jobs set nid = ? where jid = ?;", (node["nid"], job["jid"]))
+    if job and len(job):
+        cur.execute("update jobs set nid = ? where jid = ?;", (node["nid"], job[0]["jid"]))
 
-    return jsonify({"err": None, "data": job})
+    return jsonify({"err": None, "data": job[0] if len(job) else None})
