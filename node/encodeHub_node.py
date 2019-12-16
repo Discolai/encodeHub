@@ -64,7 +64,7 @@ def handle_job(j):
 
     send_report(job.report.copy())
     api.progress_q.appendleft(job.report.copy())
-    if config["delete_complete"]:
+    if api.config["delete_complete"]:
         os.remove(j["job"])
 
 def main():
