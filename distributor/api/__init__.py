@@ -11,7 +11,12 @@ from api.logs import logs_blu
 from api.nodes import nodes_bp
 from api.scans import scans_bp
 
-app.register_blueprint(jobs_bp, url_prefix="/jobs")
-app.register_blueprint(logs_blu, url_prefix="/logs")
-app.register_blueprint(nodes_bp, url_prefix="/nodes")
-app.register_blueprint(scans_bp, url_prefix="/scans")
+app.register_blueprint(jobs_bp, url_prefix="/api/jobs")
+app.register_blueprint(logs_blu, url_prefix="/api/logs")
+app.register_blueprint(nodes_bp, url_prefix="/api/nodes")
+app.register_blueprint(scans_bp, url_prefix="/api/scans")
+
+@app.after_request
+def add_header(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
