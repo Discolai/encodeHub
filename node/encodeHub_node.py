@@ -10,7 +10,7 @@ from ffmpeg import FFmpeg
 
 def request_job():
     try:
-        r = requests.put(api.config["distributor"]+"/jobs/oldest", json={"nid":api.config["nid"]})
+        r = requests.put(api.config["distributor"]+"/api/jobs/oldest", json={"nid":api.config["nid"]})
         body = json.loads(r.text)
     except:
         return None
@@ -22,7 +22,7 @@ def request_job():
 
 def send_report(log):
     try:
-        r = requests.post("{}/logs/node/{}".format(api.config["distributor"], api.config["nid"]), json=log)
+        r = requests.post("{}/api/logs".format(api.config["distributor"]), json=log)
         body = json.loads(r.text)
     except Exception as e:
         return False
@@ -62,8 +62,11 @@ def handle_job(j):
         if len(api.progress_q) > 1:
             api.progress_q.popleft()
 
-    send_report(job.report.copy())
-    api.progress_q.appendleft(job.report.copy())
+    report = job.report.copy()
+    report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
+    report["jid"] = j["jid"]
+    report["nid"] = api.config["nid"]
+    send_report(report)
     if api.config["delete_complete"]:
         os.remove(j["job"])
 

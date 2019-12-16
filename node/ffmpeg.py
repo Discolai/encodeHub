@@ -20,6 +20,7 @@ class FFmpeg:
         "drop_frames": (re.compile(b"drop_frames=[ ]*(?P<drop_frames>\d+)"), "int"),
         "speed": (re.compile(b"speed=[ ]*(?P<speed>[\\d\\.]+)x"), "float"),
         "progress":(re.compile(b"progress=[ ]*(?P<progress>\\w+)"), "str"),
+        "lsize":(re.compile(b"Lsize=[ ]*(?P<lsize>\\d+)"), "str"),
         "video": (re.compile(b"video[ ]*:[ ]*(?P<video>\\d+)"), "int"),
         "audio": (re.compile(b"audio[ ]*:[ ]*(?P<audio>\\d+)"), "int"),
         "subtitle": (re.compile(b"subtitle[ ]*:[ ]*(?P<subtitle>\\d+)"), "int"),
@@ -28,6 +29,10 @@ class FFmpeg:
         "muxing_overhead": (re.compile(b"muxing overhead[ ]*:[ ]*(?P<muxing_overhead>[\\d\\.]+)%"), "float"),
     }
 
+    report_params = [
+        "audio", "video", "subtitle", "global_headers", "other_streams", "lsize",
+        "drop_frames", "dup_frames", "elapsed_time", "muxing_overhead"
+    ]
 
     def __init__(self, inargs, input, outargs, output):
         self.cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
@@ -115,10 +120,10 @@ class FFmpeg:
                 self.progress["percentage"] = None
                 self.progress["remaining_time"] = None
 
-            if self.progress["progress"] in ["end", "stop"]:
-                self.report = self.progress
-
             self.progress["elapsed_time"] = self.get_elapsed_time()
+            if self.progress["progress"] in ["end", "stop"]:
+                self.report = {key:self.progress[key] for key in self.report_params}
+
 
         return self.progress
 
