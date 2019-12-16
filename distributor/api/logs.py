@@ -6,25 +6,18 @@ from api.db import get_db
 logs_blu = Blueprint("logs", __name__)
 
 class LogSchema(Schema):
-    frame = fields.Int(required=True)
-    fps = fields.Float(required=True)
-    speed = fields.Float(required=True)
-    bitrate = fields.Float(required=True)
+    nid = fields.Int(required=True)
+    jid = fields.Int(required=True)
     drop_frames = fields.Int(required=True)
     dup_frames = fields.Int(required=True)
-    stream = fields.Str(required=True, validate=Length(max=10))
     elapsed_time = fields.Str(required=True)
-    out_time = fields.Str(required=True)
-    out_time_ms = fields.Int(required=True)
-    remaining_time = fields.Str(required=True)
-    percentage = fields.Int(required=True)
-    progress = fields.Str(required=True, validate=Length(max=10))
     video = fields.Int(required=True)
     audio = fields.Int(required=True)
     subtitle = fields.Int(required=True)
     global_headers = fields.Int(required=True)
     other_streams = fields.Int(required=True)
-    total_size = fields.Int(required=True)
+    lsize = fields.Int(required=True)
+    prev_size = fields.Int(required=True)
     muxing_overhead = fields.Float(required=True)
 
 
@@ -48,17 +41,17 @@ def get_logs_for(nid):
     logs = [dict(row) for row in cur.fetchall()]
     return jsonify({"err": None, "data": logs})
 
-@logs_blu.route("/node/<int:nid>", methods=["POST"])
-def post_log_for(nid):
+@logs_blu.route("/", methods=["POST"])
+def post_log_for():
     log = LogSchema().load(request.json)
 
     cur = get_db().cursor()
-    params = "nid"
-    vals = "?"
-    args = [nid]
-    for key, val in log.items():
-        params += ",{}".format(key)
-        vals += ",?"
+    params = ""
+    vals = ""
+    args = []
+    for i, (key, val) in enumerate(log.items()):
+        params += "{}{}".format(key, "," if i < len(log)-1 else "")
+        vals += "?{}".format("," if i < len(log)-1 else "")
         args.append(val)
 
     sql = "insert into logs ({}) values ({});".format(params, vals)
