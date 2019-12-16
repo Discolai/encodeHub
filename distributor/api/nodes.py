@@ -16,7 +16,16 @@ def get_nodes():
     cur = get_db().cursor()
     cur.execute("select * from nodes;")
     nodes = [dict(node) for node in cur.fetchall()]
-    return jsonify({"err": None, "nodes": nodes})
+    return jsonify({"err": None, "data": nodes})
+
+@nodes_bp.route("/<int:nid>", methods=["GET"])
+def get_node(nid):
+    cur = get_db().cursor()
+    cur.execute("select * from nodes where nid=?;", (nid,))
+    nodes = [dict(node) for node in cur.fetchall()]
+    if len(nodes):
+        return jsonify({"err": None, "data": nodes[0]})
+    return jsonify({"err": "Invalid nid!", "data": None})
 
 @nodes_bp.route("/", methods=["POST"])
 def create_node():
