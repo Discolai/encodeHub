@@ -58,15 +58,14 @@ def handle_job(j):
         progress = job.read_progress().copy()
         progress["paused"] = api.paused
         progress = {**progress, **j}
-        api.progress_q.append(progress)
-        if len(api.progress_q) > 1:
-            api.progress_q.popleft()
+        api.progress_q.insert(0, progress)
 
     report = job.report.copy()
     report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
     report["jid"] = j["jid"]
     report["nid"] = api.config["nid"]
     send_report(report)
+    api.progress_q.clear()
     if api.config["delete_complete"]:
         os.remove(j["job"])
 
