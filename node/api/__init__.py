@@ -41,6 +41,11 @@ app.register_blueprint(config_bp, url_prefix="/config")
 
 import api.error_handlers
 
+@app.after_request
+def add_header(response):
+    response.headers['Access-Control-Allow-Origin'] = '*'
+    return response
+
 def run():
     from waitress import serve
     serve(app, host="0.0.0.0", port=config["api_port"])
