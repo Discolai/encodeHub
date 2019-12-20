@@ -35,6 +35,14 @@ def create_node():
     cur.execute("insert into nodes (name, address) values (?,?);", (node["name"], node["address"]))
     return Response(), 201
 
+@nodes_bp.route("/<int:nid>", methods=["POST"])
+def update_node(nid):
+    node = NodeSchema().load(request.json)
+
+    cur = get_db().cursor()
+    cur.execute("update nodes set name=?, address=? where nid=?", (node["name"], node["address"], nid))
+    return Response()
+
 @nodes_bp.route("/<int:nid>", methods=["DELETE"])
 def delete_node(nid):
     cur = get_db().cursor()

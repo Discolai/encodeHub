@@ -54,8 +54,10 @@ class Navbar extends React.Component {
                       className="col"
                       onSubmit={this.handleNew}
                       modalHdr="New node"
-                      btnTxt={<FontAwesomeIcon icon={faPlusCircle}></FontAwesomeIcon>}
                     >
+                      <button className="btn btn-secondary">
+                        <FontAwesomeIcon icon={faPlusCircle}></FontAwesomeIcon>
+                      </button>
                     </NodeForm>
                   </div>
                 </div>

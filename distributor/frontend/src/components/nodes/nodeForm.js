@@ -72,9 +72,11 @@ class NodeForm extends React.Component {
 
     return (
       <div>
-        <Button onClick={this.handleOpen}>
-          {this.props.btnTxt}
-        </Button>
+        {
+          children && React.Children.only(children).type === "button" ?
+          React.cloneElement(React.Children.only(children), {onClick: this.handleOpen}) :
+          (<button onClick={this.handleOpen}>open</button>)
+        }
         <Modal open={this.state.open} onClose={this.onClose} center>
           <h3>{this.props.modalHdr}</h3>
           <form onSubmit={this.onSubmit}>
@@ -95,8 +97,8 @@ class NodeForm extends React.Component {
 
 NodeForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
-  btnTxt: PropTypes.object.isRequired,
   modalHdr: PropTypes.string.isRequired,
+  toEdit: PropTypes.object
 }
 
 export default NodeForm;
