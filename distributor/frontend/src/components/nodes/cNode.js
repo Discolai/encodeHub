@@ -43,7 +43,7 @@ class Node extends React.Component {
             stopUpdateView={() => this.setState({updateLogs: false, updateNode: false})}
             updateNode={this.state.updateNode}
           >
-        </NodeItem>
+          </NodeItem>
           <br></br>
             <Table striped bordered hover size="sm">
               <thead className="thead-dark">

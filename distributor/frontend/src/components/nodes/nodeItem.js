@@ -42,7 +42,6 @@ class NodeItem extends React.Component {
     const {node} = this.state;
     if (this.state.node) {
       axios.get(`${node.address}/job/progress`).then((response) => {
-        console.log(response.data);
         this.setState({progress: response.data.data, status: "Running"})
       }).catch((err) => {
         if (err.response && err.response.status == 404) {
@@ -55,7 +54,6 @@ class NodeItem extends React.Component {
   }
 
   handleDelete = (node) => {
-    // console.log(node);
     axios.delete(`/api/nodes/${node.nid}`)
     .then((response) => {
       console.log("Deleted");
