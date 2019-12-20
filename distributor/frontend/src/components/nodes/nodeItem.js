@@ -22,9 +22,9 @@ class NodeItem extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.nid !== prevProps.nid) {
-      this.getNode(this.nid);
-      this.getLogs(this.nid);
+    if (this.props.nid !== prevProps.nid || this.props.updateNode) {
+      this.getNode(this.props.nid);
+      this.props.stopUpdateView();
     }
   }
 
@@ -104,5 +104,9 @@ class NodeItem extends React.Component {
     );
   }
 }
+NodeItem.propTypes = {
+  stopUpdateView: PropTypes.func.isRequired,
+  updateNode: PropTypes.bool.isRequired,
+};
 
 export default NodeItem;

@@ -10,6 +10,8 @@ import Table from 'react-bootstrap/Table'
 class Node extends React.Component {
   state = {
     logs: [],
+    updateNode: false,
+    updateLogs: false
   };
 
   componentDidMount() {
@@ -17,7 +19,7 @@ class Node extends React.Component {
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.nid !== prevProps.match.params.nid) {
+    if (this.props.match.params.nid !== prevProps.match.params.nid || this.state.updateLogs) {
       this.getLogs(this.props.match.params.nid);
     }
   }
@@ -33,8 +35,15 @@ class Node extends React.Component {
   render () {
     return (
       <Container fluid>
-        <Navbar>
-          <NodeItem nid={this.props.match.params.nid}></NodeItem>
+        <Navbar
+          updateView={() => this.setState({updateLogs: true, updateNode: true})}
+        >
+          <NodeItem
+            nid={this.props.match.params.nid}
+            stopUpdateView={() => this.setState({updateLogs: false, updateNode: false})}
+            updateNode={this.state.updateNode}
+          >
+        </NodeItem>
           <br></br>
             <Table striped bordered hover size="sm">
               <thead className="thead-dark">
