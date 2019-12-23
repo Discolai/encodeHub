@@ -22,7 +22,9 @@ class NodeSchema(Schema):
 def get_jobs():
     cur = get_db().cursor()
 
-    cur.execute("select * from jobs;")
+    limit = request.args.get("limit", 20);
+    start = request.args.get("start", 0);
+    cur.execute("select * from jobs order by timestamp limit ? offset ?;", (limit, start))
     jobs = [dict(job) for job in cur.fetchall()]
     return jsonify({"err": None, "data": jobs}), 200
 
