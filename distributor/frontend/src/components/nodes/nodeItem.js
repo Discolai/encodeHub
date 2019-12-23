@@ -4,7 +4,6 @@ import axios from 'axios'
 import AcceptPopup from '../acceptPopup'
 import NodeForm from './nodeForm'
 import ProgressBar from 'react-bootstrap/ProgressBar'
-import Button from 'react-bootstrap/Button'
 
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faInfoCircle, faBuilding, faLocationArrow, faClock, faEdit, faMinusCircle} from '@fortawesome/free-solid-svg-icons'
@@ -44,7 +43,7 @@ class NodeItem extends React.Component {
       axios.get(`${node.address}/job/progress`).then((response) => {
         this.setState({progress: response.data.data, status: "Running"})
       }).catch((err) => {
-        if (err.response && err.response.status == 404) {
+        if (err.response && err.response.status === 404) {
           this.setState({progress: null, status: "Polling"})
         } else {
           this.setState({status: "Offline"})

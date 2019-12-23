@@ -2,7 +2,6 @@ import React from 'react'
 import PropTypes from 'prop-types'
 
 import Modal from 'react-responsive-modal'
-import Button from 'react-bootstrap/Button'
 
 class AcceptPopup extends React.Component {
   state = {open: false}

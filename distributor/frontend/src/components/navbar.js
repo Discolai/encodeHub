@@ -3,8 +3,7 @@ import PropTypes from 'prop-types'
 import axios from 'axios'
 import {Link} from 'react-router-dom'
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faServer, faPlusCircle, faPencil} from '@fortawesome/free-solid-svg-icons'
-import Button from 'react-bootstrap/Button'
+import {faServer, faPlusCircle} from '@fortawesome/free-solid-svg-icons'
 import NodeForm from './nodes/nodeForm'
 
 
