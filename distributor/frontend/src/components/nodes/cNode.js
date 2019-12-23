@@ -9,6 +9,7 @@ import Table from 'react-bootstrap/Table'
 
 class Node extends React.Component {
   state = {
+    nodes: [],
     logs: [],
     updateNode: false,
     updateLogs: false
@@ -16,12 +17,21 @@ class Node extends React.Component {
 
   componentDidMount() {
     this.getLogs(this.props.match.params.nid);
+    this.getNodes();
   }
 
   componentDidUpdate(prevProps) {
     if (this.props.match.params.nid !== prevProps.match.params.nid || this.state.updateLogs) {
       this.getLogs(this.props.match.params.nid);
     }
+  }
+
+  getNodes() {
+    axios.get("/api/nodes").then((response) => {
+      this.setState({nodes: response.data.data})
+    }).catch((err) => {
+      console.error(err);
+    });
   }
 
   getLogs(nid) {
@@ -32,18 +42,47 @@ class Node extends React.Component {
     });
   }
 
+  handleDelete = (node) => {
+    axios.delete(`/api/nodes/${node.nid}`)
+    .then((response) => {
+      console.log("Deleted");
+      this.props.history.push("/");
+    })
+    .catch((err) => {
+      console.log(err.response.data);
+    });
+  };
+
+  handleEdit = (node) => {
+    const {nid, ...payload} = node;
+    axios.post(`/api/nodes/${nid}`, payload)
+    .then((response) => {
+      this.getNodes();
+    })
+    .catch((err) => {
+      console.log(err.response.data);
+    })
+  };
+
   render () {
     return (
       <Container fluid>
-        <Navbar
-          updateView={() => this.setState({updateLogs: true, updateNode: true})}
-        >
-          <NodeItem
-            nid={this.props.match.params.nid}
-            stopUpdateView={() => this.setState({updateLogs: false, updateNode: false})}
-            updateNode={this.state.updateNode}
-          >
-          </NodeItem>
+        <Navbar updateView={this.getNodes} nodes={this.state.nodes}>
+          {
+            this.state.nodes.map((node) => {
+              if (node.nid == this.props.match.params.nid) {
+                return (
+                  <NodeItem
+                    key={node.nid}
+                    node={node}
+                    onEdit={this.handleEdit}
+                    onDelete={this.handleDelete}
+                  ></NodeItem>
+                );
+              }
+              return null
+            })
+          }
           <br></br>
             <Table striped bordered hover size="sm">
               <thead className="thead-dark">

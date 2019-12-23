@@ -9,33 +9,16 @@ import NodeForm from './nodes/nodeForm'
 
 class Navbar extends React.Component {
 
-  state = {
-    nodes: []
-  };
-
-  componentDidMount() {
-    this.getNodes();
-  }
-
   handleNew = (node) => {
     console.log(node);
     axios.post(`/api/nodes/`, node)
     .then((response) => {
-      this.getNodes();
       this.props.updateView();
     })
     .catch((err) => {
       console.error(err.response);
     });
   };
-
-  getNodes() {
-    axios.get("/api/nodes").then((response) => {
-      this.setState({nodes: response.data.data})
-    }).catch((err) => {
-      console.error(err);
-    });
-  }
 
   render () {
     return (
@@ -61,13 +44,12 @@ class Navbar extends React.Component {
                   </div>
                 </div>
                 {
-                  this.state.nodes.map((node) => {
+                  this.props.nodes.map((node) => {
                     const link = `/node/${node.nid}`;
                     return (
                       <li key={node.nid} className="nav-item">
                         <Link to={link} key={node.nid} className="nav-link">
-                          <FontAwesomeIcon icon={faServer}></FontAwesomeIcon>
-                          {" "}{node.name}
+                          {`#${node.nid} ${node.name}`}
                         </Link>
                       </li>
                     );

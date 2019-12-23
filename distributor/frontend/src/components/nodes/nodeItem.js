@@ -10,36 +10,18 @@ import {faInfoCircle, faBuilding, faLocationArrow, faClock, faEdit, faMinusCircl
 
 class NodeItem extends React.Component {
   state = {
-    node: null,
-    logs: [],
     progress: null,
     status: "Offline"
   }
   timer = null;
 
   componentDidMount() {
-    this.getNode(this.props.nid);
     this.getProgress();
   }
 
-  componentDidUpdate(prevProps) {
-    if (this.props.nid !== prevProps.nid || this.props.updateNode) {
-      this.getNode(this.props.nid);
-      this.props.stopUpdateView();
-    }
-  }
-
-  getNode(nid) {
-    axios.get(`/api/nodes/${nid}`).then((response) => {
-      this.setState({node: response.data.data})
-    }).catch((err) => {
-      console.error(err);
-    });
-  }
-
   getProgress() {
-    const {node} = this.state;
-    if (this.state.node) {
+    const {node} = this.props;
+    if (this.props.node) {
       axios.get(`${node.address}/job/progress`).then((response) => {
         this.setState({progress: response.data.data, status: "Running"})
       }).catch((err) => {
@@ -52,36 +34,15 @@ class NodeItem extends React.Component {
     }
   }
 
-  handleDelete = (node) => {
-    axios.delete(`/api/nodes/${node.nid}`)
-    .then((response) => {
-      console.log("Deleted");
-      this.props.history.push("/");
-    })
-    .catch((err) => {
-      console.log(err.response.data);
-    });
-  };
-
-  handleEdit = (node) => {
-    axios.post(`/api/nodes/${this.state.node.nid}`, node)
-    .then((response) => {
-      this.getNode(this.state.node.nid);
-    })
-    .catch((err) => {
-      console.log(err.response.data);
-    })
-  };
-
   render () {
-    const editHdr = `Edit node ${this.state.nid}`;
+    const editHdr = `Edit node ${this.props.node.nid}`;
     return (
       <div className="mx-auto bg-dark text-white p-3 mt-3">
         <div className="btn-group mb-2">
           <NodeForm
             modalHdr={editHdr}
-            onSubmit={this.handleEdit}
-            toEdit={this.state.node}
+            onSubmit={this.props.onEdit}
+            toEdit={this.props.node}
           >
             <button className="btn btn-secondary">
               <FontAwesomeIcon icon={faEdit}></FontAwesomeIcon>
@@ -89,8 +50,8 @@ class NodeItem extends React.Component {
           </NodeForm>
           <AcceptPopup
             modalHdr="Are you sure you want to delete this node?"
-            onAccept={this.handleDelete}
-            payload={this.state.node}
+            onAccept={this.props.onDelete}
+            payload={this.props.node}
             role="Delete"
           >
             <button className="btn btn-danger">
@@ -113,7 +74,7 @@ class NodeItem extends React.Component {
             Node
           </div>
           <div className="col px-md-2">
-            {this.state.node ? this.state.node.name : ""}
+            {this.props.node ? this.props.node.name : ""}
           </div>
         </div>
         <div className="row px-md-n2">
@@ -122,7 +83,7 @@ class NodeItem extends React.Component {
             Address
           </div>
           <div className="col px-md-2">
-            {this.state.node ? this.state.node.address : ""}
+            {this.props.node ? this.props.node.address : ""}
           </div>
         </div>
         <br></br>
@@ -148,8 +109,9 @@ class NodeItem extends React.Component {
   }
 }
 NodeItem.propTypes = {
-  stopUpdateView: PropTypes.func.isRequired,
-  updateNode: PropTypes.bool.isRequired,
+  node: PropTypes.object.isRequired,
+  onEdit: PropTypes.func.isRequired,
+  onDelete: PropTypes.func.isRequired
 };
 
 export default NodeItem;

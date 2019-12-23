@@ -41,6 +41,7 @@ class NodeForm extends React.Component {
     // Get form input
     let form = {}
     this.state.inputs.map((x) => form[x.name] = this.state[x.name])
+    if (this.state.nid) form.nid = this.state.nid;
 
     this.props.onSubmit(form);
 
