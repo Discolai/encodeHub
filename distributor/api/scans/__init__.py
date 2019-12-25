@@ -8,6 +8,7 @@ import os, threading
 scans_bp = Blueprint("scans", __name__)
 
 scan_thread = None
+stop_thread = False
 
 class ScanSchema(Schema):
     dir = fields.Str(required=True, validate=Length(max=255))
@@ -53,7 +54,9 @@ def start_scan():
     cur.execute("select * from scans where sid = ?;", (cur.lastrowid,))
     scan  = [dict(row) for row in cur.fetchall()][0]
 
-    scan_thread = threading.Thread(target=run, daemon=True, args=(scan["sid"], scan["dir"]))
+    global scan_thread
+    global stop_thread
+    scan_thread = threading.Thread(target=run, daemon=True, args=(lambda : stop_thread, scan["sid"], scan["dir"]))
     scan_thread.start()
 
     return jsonify({"err": None, "data": scan}), 201
@@ -63,10 +66,11 @@ def start_scan():
 def stop_scan(sid):
     cur = get_db().cursor()
     cur.execute("select * from scans where sid = ? and stop is not null;", (sid,))
-    if len(cur.fetchall()):
+    if not scan_thread or len(cur.fetchall()):
         return jsonify({"err": "Scan has already stopped!"}), 403
 
-    cur.execute("update scans set stop = CURRENT_TIMESTAMP where sid = ?;", (sid,))
-    scan_thread.kill()
+    global stop_thread
+    global scan_thread
+    stop_thread = True
     scan_thread.join()
     return Response()
