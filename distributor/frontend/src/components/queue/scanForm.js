@@ -2,17 +2,13 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Modal from 'react-responsive-modal';
 
-class JobForm extends React.Component {
+class ScanForm extends React.Component {
 
   state = {
     open: false,
-    job: '',
-    nid: '',
-    finished: '',
+    dir: '',
     inputs: [
-      {label: 'Job', name: 'job', type: "text", isRequired: true},
-      {label: 'Finished', name: 'finished', type: 'checkbox', isRequired: false},
-      {label: 'Nid', name: 'nid', type: "number", isRequired: true}
+      {label: 'Directory', name: 'dir', type: "text", isRequired: true}
     ]
   }
 
@@ -53,7 +49,8 @@ class JobForm extends React.Component {
     // Get form input
     let form = {}
     this.state.inputs.map((x) => form[x.name] = this.state[x.name])
-    form["jid"] = this.props.toEdit.jid;
+    if (this.props.toEdit)
+      form["jid"] = this.props.toEdit.jid;
 
     this.props.onSubmit(form);
 
@@ -108,10 +105,10 @@ class JobForm extends React.Component {
   }
 }
 
-JobForm.propTypes = {
+ScanForm.propTypes = {
   onSubmit: PropTypes.func.isRequired,
   modalHdr: PropTypes.string.isRequired,
   toEdit: PropTypes.object
 }
 
-export default JobForm;
+export default ScanForm;

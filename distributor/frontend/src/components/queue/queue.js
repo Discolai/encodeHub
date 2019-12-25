@@ -2,6 +2,7 @@ import React from 'react'
 import PropTypes from 'prop-types'
 import Navbar from '../navbar'
 import JobItem from './jobItem'
+import ScanItem from './scanItem'
 import axios from 'axios'
 
 import Table from 'react-bootstrap/Table'
@@ -9,11 +10,14 @@ import Table from 'react-bootstrap/Table'
 class Queue extends React.Component {
   state = {
     nodes: [],
-    jobs: []
+    jobs: [],
+    scan: null
   }
 
   componentDidMount() {
     this.getJobs();
+    this.getNodes();
+    this.getScan();
   }
 
   getNodes() {
@@ -34,10 +38,21 @@ class Queue extends React.Component {
     });
   }
 
+  getScan() {
+    axios.get("/api/scans/running")
+    .then((response) => {
+      this.setState({scan: response.data.data});
+    })
+    .catch((err) => {
+      console.log(err);
+    })
+  }
+
   handleDelete = (job) => {
     axios.delete(`/api/jobs/${job.jid}`)
     .then((response) => {
       console.log("Deleted");
+      this.getJobs();
     })
     .catch((err) => {
       console.log(err.response.data);
@@ -46,25 +61,53 @@ class Queue extends React.Component {
 
   handleEdit = (job) => {
     const {jid, ...payload} = job;
-    axios.post(`/api/nodes/${jid}`, payload)
+    axios.post(`/api/jobs/${jid}`, payload)
     .then((response) => {
-      this.getNodes();
+      this.getJobs();
     })
     .catch((err) => {
       console.log(err.response.data);
     })
   };
 
+  handleAddScan = (scan) => {
+    axios.post("/api/scans/start", scan)
+    .then((response) => {
+      this.getScan();
+    })
+    .catch((err) => {
+      console.log(err.response);
+    });
+  };
+
+  handleStopScan = (scan) => {
+    axios.post(`/api/scans/stop/${scan.sid}`)
+    .then((response) => {
+      console.log(scan.sid, "stopping");
+      this.getScan();
+    })
+    .catch((err) => {
+      console.log(err.response);
+    });
+  };
+
   render () {
     return (
-      <Navbar nodes={this.state.nodes} updateView={() => {}}>
+      <Navbar nodes={this.state.nodes} updateView={() => this.getNodes()}>
+        <ScanItem
+          scan={this.state.scan}
+          onStop={this.handleStopScan}
+          onAdd={this.handleAddScan}
+          onEdit={this.handleEditScan}
+        ></ScanItem>
+        <br></br>
         <Table striped bordered hover size="sm">
           <thead className="thead-dark">
             <tr>
               <th>#</th>
               <th>Job</th>
               <th>Finished</th>
-              <th>Nid</th>
+              <th>Retrieved by</th>
               <th></th>
             </tr>
           </thead>
