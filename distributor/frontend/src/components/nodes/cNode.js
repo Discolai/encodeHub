@@ -67,7 +67,7 @@ class Node extends React.Component {
   render () {
     return (
       <Container fluid>
-        <Navbar updateView={this.getNodes} nodes={this.state.nodes}>
+        <Navbar updateView={() => this.getNodes()} nodes={this.state.nodes}>
           {
             this.state.nodes.map((node) => {
               if (node.nid == this.props.match.params.nid) {
