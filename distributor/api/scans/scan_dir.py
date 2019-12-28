@@ -1,6 +1,5 @@
 import os, json, re, sqlite3, pexpect, sys
-from api import config, stop_scan
-# from api.scans import stop_scan
+from api import config
 
 class VideoInfo:
     def __init__(self, sid, config):

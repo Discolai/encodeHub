@@ -70,7 +70,6 @@ def stop_scan(sid):
         return jsonify({"err": "Scan has already stopped!"}), 403
 
     global stop_thread
-    global scan_thread
     stop_thread = True
     scan_thread.join()
     return Response()
