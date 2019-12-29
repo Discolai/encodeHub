@@ -12,7 +12,7 @@ class JobForm extends React.Component {
     inputs: [
       {label: 'Job', name: 'job', type: "text", isRequired: true},
       {label: 'Finished', name: 'finished', type: 'checkbox', isRequired: false},
-      {label: 'Nid', name: 'nid', type: "number", isRequired: true}
+      {label: 'Nid', name: 'nid', type: "number", isRequired: false}
     ]
   }
 
@@ -52,7 +52,15 @@ class JobForm extends React.Component {
 
     // Get form input
     let form = {}
-    this.state.inputs.map((x) => form[x.name] = this.state[x.name])
+    this.state.inputs.map((x) => {
+      if (this.state[x.name] == "") {
+        form[x.name] = null;
+      } else if (x.type === "checkbox") {
+        form[x.name] = this.state[x.name] ? 1 : 0
+      } else {
+        form[x.name] = this.state[x.name]
+      }
+    })
     form["jid"] = this.props.toEdit.jid;
 
     this.props.onSubmit(form);
