@@ -17,7 +17,7 @@ class JobSchema(Schema):
 
 class EditJobSchema(JobSchema):
     nid = fields.Int(required=True, allow_none=True)
-    finished = fields.Bool(required=True)
+    finished = fields.Bool(required=True, allow_none=True)
 
 class NodeSchema(Schema):
     nid = fields.Int(required=True)
@@ -57,6 +57,7 @@ def delete_jobs(jid):
 @jobs_bp.route("/<int:jid>", methods=["POST"])
 def update_jobs(jid):
     ejob = EditJobSchema().load(request.json)
+    ejob["finished"] = 0 if ejob["finished"] == None else 1
     cur = get_db().cursor()
 
     cur.execute("select * from jobs where jid=?;", (jid, ))
@@ -73,8 +74,11 @@ def oldest_job():
 
     cur = get_db().cursor()
 
-    cur.execute("select jid, job from jobs where nid is null and finished=0 limit 1;")
+    cur.execute("select jid, job from jobs where nid=? and finished=0 limit 1;", (node["nid"],))
     job = [dict(row) for row in cur.fetchall()]
+    if not job or not len(job):
+        cur.execute("select jid, job from jobs where nid is null and finished=0 limit 1;")
+        job = [dict(row) for row in cur.fetchall()]
 
     if job and len(job):
         cur.execute("update jobs set nid = ? where jid = ?;", (node["nid"], job[0]["jid"]))
