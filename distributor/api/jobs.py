@@ -1,6 +1,7 @@
 from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load, validates, ValidationError
 from marshmallow.validate import Length
+from math import ceil
 import os, requests
 from api.db import get_db
 
@@ -25,12 +26,15 @@ class NodeSchema(Schema):
 def get_jobs():
     cur = get_db().cursor()
 
-    limit = request.args.get("limit", 20);
-    start = request.args.get("start", 0);
+    limit = int(request.args.get("limit", 20));
+    page = int(request.args.get("page", 0));
     finished = request.args.get("finished", False);
-    cur.execute("select * from jobs where finished=? limit ? offset ?;", (finished, limit, start))
+    cur.execute("select count(jid) as count from jobs where finished=?;", (finished,))
+    count = dict(cur.fetchall()[0])["count"]
+
+    cur.execute("select * from jobs where finished=? limit ? offset ?;", (finished, limit, int(page*limit)))
     jobs = [dict(job) for job in cur.fetchall()]
-    return jsonify({"err": None, "data": jobs}), 200
+    return jsonify({"err": None, "data": jobs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}}), 200
 
 
 @jobs_bp.route("/", methods=["POST"])

@@ -4,6 +4,7 @@ import Navbar from '../navbar'
 import JobItem from './jobItem'
 import ScanItem from './scanItem'
 import axios from 'axios'
+import Pager from '../pager'
 
 import Table from 'react-bootstrap/Table'
 
@@ -11,6 +12,8 @@ class Queue extends React.Component {
   state = {
     nodes: [],
     jobs: [],
+    page: 0,
+    paging: null,
     scan: null,
     finished: false
   }
@@ -30,9 +33,9 @@ class Queue extends React.Component {
   }
 
   getJobs() {
-    axios.get("/api/jobs", {params: {finished: +this.state.finished}})
+    axios.get("/api/jobs", {params: {finished: +this.state.finished, page: this.state.page}})
     .then((response) => {
-      this.setState({jobs: response.data.data});
+      this.setState({jobs: response.data.data, paging: response.data.paging});
     })
     .catch((err) => {
       console.error(err);
@@ -93,11 +96,25 @@ class Queue extends React.Component {
   };
 
   render () {
+    const {nodes, finished, paging, page} = this.state;
+
+    const pagination = (
+      <Pager
+        currentPage={page}
+        totalPages={paging ? paging.totalPages : 0}
+        onLink={(page) => {
+          if (page < paging.totalPages && page >= 0) {
+            this.setState({page: page}, this.getJobs);
+          }
+        }}
+      ></Pager>
+    );
+
     return (
       <Navbar nodes={this.state.nodes} updateView={() => this.getNodes()}>
         <div>
           <button className="btn btn-primary" onClick={() => {
-              this.setState({finished: !this.state.finished}, this.getJobs);
+              this.setState({finished: !this.state.finished, page: 0}, this.getJobs);
             }}
           >
             Toggle finished jobs
@@ -110,6 +127,13 @@ class Queue extends React.Component {
           onEdit={this.handleEditScan}
         ></ScanItem>
         <br></br>
+        {
+          this.state.paging ? (
+            <div className="row align-items-center justify-content-center mb-1">
+              {pagination}
+            </div>
+          ) : ""
+        }
         <Table striped bordered hover size="sm">
           <thead className="thead-dark">
             <tr>
@@ -135,6 +159,13 @@ class Queue extends React.Component {
             }
           </tbody>
         </Table>
+        {
+          this.state.paging ? (
+            <div className="row align-items-center justify-content-center mb-1">
+              {pagination}
+            </div>
+          ) : ""
+        }
       </Navbar>
     );
   }
