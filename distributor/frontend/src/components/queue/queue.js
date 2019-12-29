@@ -11,7 +11,8 @@ class Queue extends React.Component {
   state = {
     nodes: [],
     jobs: [],
-    scan: null
+    scan: null,
+    finished: false
   }
 
   componentDidMount() {
@@ -29,7 +30,7 @@ class Queue extends React.Component {
   }
 
   getJobs() {
-    axios.get("/api/jobs")
+    axios.get("/api/jobs", {params: {finished: +this.state.finished}})
     .then((response) => {
       this.setState({jobs: response.data.data});
     })
@@ -94,6 +95,14 @@ class Queue extends React.Component {
   render () {
     return (
       <Navbar nodes={this.state.nodes} updateView={() => this.getNodes()}>
+        <div>
+          <button className="btn btn-primary" onClick={() => {
+              this.setState({finished: !this.state.finished}, this.getJobs);
+            }}
+          >
+            Toggle finished jobs
+          </button>
+        </div>
         <ScanItem
           scan={this.state.scan}
           onStop={this.handleStopScan}
