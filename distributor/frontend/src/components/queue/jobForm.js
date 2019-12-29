@@ -53,13 +53,14 @@ class JobForm extends React.Component {
     // Get form input
     let form = {}
     this.state.inputs.map((x) => {
-      if (this.state[x.name] == "") {
+      if (this.state[x.name] === "") {
         form[x.name] = null;
       } else if (x.type === "checkbox") {
         form[x.name] = this.state[x.name] ? 1 : 0
       } else {
         form[x.name] = this.state[x.name]
       }
+      return null;
     })
     form["jid"] = this.props.toEdit.jid;
 

@@ -4,7 +4,7 @@ import ScanForm from './scanForm'
 import AcceptPopup from '../acceptPopup'
 
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faFolder, faHourglassStart, faHourglassEnd, faEdit, faPlusCircle, faStopCircle, faPlayCircle} from '@fortawesome/free-solid-svg-icons'
+import {faFolder, faHourglassStart, faHourglassEnd, faStopCircle, faPlayCircle} from '@fortawesome/free-solid-svg-icons'
 
 
 class ScanItem extends React.Component {
@@ -69,6 +69,12 @@ class ScanItem extends React.Component {
       </div>
     );
   }
+}
+ScanItem.propTypes = {
+  scan: PropTypes.object.isRequired,
+  onStop: PropTypes.func.isRequired,
+  onAdd: PropTypes.func.isRequired,
+  onEdit: PropTypes.func.isRequired
 }
 
 export default ScanItem;

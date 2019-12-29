@@ -3,7 +3,7 @@ import PropTypes from 'prop-types'
 import axios from 'axios'
 import {Link} from 'react-router-dom'
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faServer, faPlusCircle} from '@fortawesome/free-solid-svg-icons'
+import {faPlusCircle} from '@fortawesome/free-solid-svg-icons'
 import NodeForm from './nodes/nodeForm'
 
 
@@ -13,6 +13,11 @@ class Navbar extends React.Component {
     console.log(node);
     axios.post(`/api/nodes/`, node)
     .then((response) => {
+      console.log(response.data.data);
+      axios.post(`/api/nodes/setup/${response.data.data.id}`)
+      .catch((err) => {
+        console.error(err.response);
+      });
       this.props.updateView();
     })
     .catch((err) => {
@@ -27,6 +32,9 @@ class Navbar extends React.Component {
           <div className="col-lg-2 col-sm-3 pl-4 bg-dark min-vh-100">
             <div className="py-4 position-fixed flex-grow-1">
               <ul className="navbar-nav mr-auto text-white">
+                <div className="navbar-brand">
+                  <Link className="text-white" to="/">Queue</Link>
+                </div>
                 <div className="navbar-brand">
                   <div className="row">
                     <div className="col">

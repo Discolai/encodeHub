@@ -1,5 +1,4 @@
 import React from 'react'
-import PropTypes from 'prop-types'
 import Navbar from '../navbar'
 import JobItem from './jobItem'
 import ScanItem from './scanItem'
@@ -111,10 +110,10 @@ class Queue extends React.Component {
     );
 
     return (
-      <Navbar nodes={this.state.nodes} updateView={() => this.getNodes()}>
+      <Navbar nodes={nodes} updateView={() => this.getNodes()}>
         <div>
           <button className="btn btn-primary" onClick={() => {
-              this.setState({finished: !this.state.finished, page: 0}, this.getJobs);
+              this.setState({finished: !finished, page: 0}, this.getJobs);
             }}
           >
             Toggle finished jobs
