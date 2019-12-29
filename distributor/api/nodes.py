@@ -33,7 +33,7 @@ def create_node():
 
     cur = get_db().cursor()
     cur.execute("insert into nodes (name, address) values (?,?);", (node["name"], node["address"]))
-    return Response(), 201
+    return jsonify({"err": None, "data": {"id": cur.lastrowid}})
 
 @nodes_bp.route("/<int:nid>", methods=["POST"])
 def update_node(nid):

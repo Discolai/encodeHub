@@ -16,6 +16,7 @@ class NodeItem extends React.Component {
   timer = null;
 
   componentDidMount() {
+    this.setState({timer: setInterval(() => this.getProgress(), 2000)});
     this.getProgress();
   }
 
@@ -23,7 +24,8 @@ class NodeItem extends React.Component {
     const {node} = this.props;
     if (this.props.node) {
       axios.get(`${node.address}/job/progress`).then((response) => {
-        this.setState({progress: response.data.data, status: "Running"})
+        const status = response.data.data.paused ? "Paused" : "Running";
+        this.setState({progress: response.data.data, status: status})
       }).catch((err) => {
         if (err.response && err.response.status === 404) {
           this.setState({progress: null, status: "Polling"})
@@ -33,6 +35,23 @@ class NodeItem extends React.Component {
       });
     }
   }
+
+  handleStop = () => {
+    const {node} = this.props;
+    axios.post(`${node.address}/job/stop`)
+    .catch((err) => {
+      console.error(err);
+    })
+
+  };
+
+  handlePause = () => {
+    const {node} = this.props;
+    axios.post(`${node.address}/job/pause`)
+    .catch((err) => {
+      console.error(err);
+    })
+  };
 
   render () {
     const editHdr = `Edit node ${this.props.node.nid}`;
@@ -90,6 +109,10 @@ class NodeItem extends React.Component {
         {
           this.state.progress ? (
             <div>
+              <div className="btn-group mb-2">
+                <button className="btn btn-primary" onClick={this.handlePause}>Pause</button>
+                <button className="btn btn-danger" onClick={this.handleStop}>Stop</button>
+              </div>
               <ProgressBar now={this.state.progress.percentage} label={`${this.state.progress.percentage}%`}></ProgressBar>
               <div className="row px-md-n2">
                 <div className="col px-md-2">
