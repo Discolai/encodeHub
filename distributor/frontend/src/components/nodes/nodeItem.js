@@ -16,8 +16,12 @@ class NodeItem extends React.Component {
   timer = null;
 
   componentDidMount() {
-    this.setState({timer: setInterval(() => this.getProgress(), 2000)});
+    this.timer = setInterval(() => this.getProgress(), 2000);
     this.getProgress();
+  }
+
+  componentWillUnmount() {
+    clearInterval(this.timer);
   }
 
   getProgress() {
