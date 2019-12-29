@@ -1,28 +1,25 @@
 from flask import Flask, Response, request, jsonify, Blueprint
-from marshmallow import Schema, fields, post_load
+from marshmallow import Schema, fields, validates, ValidationError
 from marshmallow.validate import Length
 
-import api
+import api, os
 
 queue_bp = Blueprint("queue", __name__)
 
 class JobSchema(Schema):
     jid = fields.Int(required=True)
     job = fields.Str(required=True, validate=Length(max=255, min=5))
-    timestamp = fields.DateTime(required=True)
+    nid = fields.Int(required=True)
+    finished = fields.Int(required=True)
 
-    @post_load
-    def load_queue(self, data, **kwargs):
-        return {
-            "jid": data["jid"],
-            "job": data["job"],
-            "timestamp": data["timestamp"]
-        }
+    @validates("job")
+    def validate_error(self, value):
+        if not os.path.isfile(value):
+            raise ValidationError("Job must be a file.")
 
 @queue_bp.route("/", methods=["POST"])
 def enque():
     nj = JobSchema().load(request.json)
-
     api.job_q.append(nj)
     return jsonify({"err": None})
 
@@ -34,10 +31,20 @@ def deque():
     except:
         return jsonify({"err": "Job queue is empty", "job": None}), 404
 
+@queue_bp.route("/<int:jid>", methods=["DELETE"])
+def pop_item(jid):
+    res = None
+    for i, job in enumerate(api.job_q):
+        if job["jid"] == jid:
+            res = job
+            del(api.job_q[i])
+            break
+    if res:
+        return jsonify({"err": None, "data": res})
+    else:
+        return jsonify({"err": "Could not find jid!", "data": res}), 404
+
+
 @queue_bp.route("/", methods=["GET"])
 def get_queue():
-    jobs = list(api.job_q)
-    if len(jobs):
-        return jsonify({"err": None, "jobs": jobs}), 200
-    else:
-        return jsonify({"err": "Job queue is empty", "jobs": None}), 404
+    return jsonify({"err": None, "jobs": list(api.job_q)}), 200

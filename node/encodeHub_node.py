@@ -84,8 +84,6 @@ def main():
         try:
             api.stop = False
             j = api.job_q.popleft()
-            if not os.path.isfile(j["job"]):
-                continue
             handle_job(j)
         except Exception as e:
             api.job_q.appendleft(j)
