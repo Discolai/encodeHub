@@ -74,7 +74,6 @@ ScanItem.propTypes = {
   scan: PropTypes.object.isRequired,
   onStop: PropTypes.func.isRequired,
   onAdd: PropTypes.func.isRequired,
-  onEdit: PropTypes.func.isRequired
 }
 
 export default ScanItem;
