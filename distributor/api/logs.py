@@ -19,6 +19,7 @@ class LogSchema(Schema):
     lsize = fields.Int(required=True)
     prev_size = fields.Int(required=True)
     muxing_overhead = fields.Float(required=True)
+    finished = fields.Bool(required=True)
 
 
 @logs_blu.route("/", methods=["GET"])
@@ -56,4 +57,6 @@ def post_log_for():
 
     sql = "insert into logs ({}) values ({});".format(params, vals)
     cur.execute(sql, tuple(args))
+    if log["finished"]:
+        cur.execute("update jobs set finished=1 where jid=?;", (log["jid"],))
     return Response(), 201

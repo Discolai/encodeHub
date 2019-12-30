@@ -123,7 +123,7 @@ class FFmpeg:
             self.progress["elapsed_time"] = self.get_elapsed_time()
             if self.progress["progress"] in ["end", "stop"]:
                 self.report = {key:self.progress[key] for key in self.report_params}
-
+                self.report["finished"] = False if self.progress["progress"] == "stop" else True
 
         return self.progress
 

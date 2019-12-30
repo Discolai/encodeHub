@@ -30,7 +30,8 @@ CREATE TABLE IF NOT EXISTS logs (
   other_streams INTEGER NOT NULL,
   lsize INTEGER NOT NULL,
   prev_size INTEGER NOT NULL,
-  muxing_overhead FLOAT NOT NULL
+  muxing_overhead FLOAT NOT NULL,
+  finished TINYINT NOT NULL
 );
 
 CREATE TABLE IF NOT EXISTS scans (
