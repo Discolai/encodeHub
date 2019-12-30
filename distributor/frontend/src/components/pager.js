@@ -10,9 +10,17 @@ class Pager extends React.Component {
     const {currentPage, totalPages, onLink} = this.props
     const links = [];
 
-    for (let i = 0; i < totalPages; i++) {
+    const start = currentPage < 5 ? 0 : currentPage-5;
+    const end = start + 10;
+    if (start != 0) {
+      links.push(<button className="btn btn-primary">...</button>)
+    }
+    for (let i = start; i < end; i++) {
       const classes = currentPage === i ? "btn btn-primary active" : "btn btn-primary";
       links.push(<button key={i} className={classes} onClick={() => onLink(i)}>{i}</button>);
+    }
+    if (end < totalPages) {
+      links.push(<button className="btn btn-primary">...</button>)
     }
     return (
       <div className="btn-group">
