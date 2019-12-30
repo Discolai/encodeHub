@@ -1,10 +1,10 @@
-from flask import Flask
+from flask import Flask, render_template
 import json
 
 with open("config.json") as f:
     config = json.load(f)
 
-app = Flask(__name__)
+app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/build")
 
 from api.jobs import jobs_bp
 from api.logs import logs_blu
@@ -20,3 +20,7 @@ app.register_blueprint(scans_bp, url_prefix="/api/scans")
 def add_header(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
+
+@app.route("/")
+def react():
+    return render_template('index.html')
