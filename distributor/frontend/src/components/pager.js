@@ -34,8 +34,8 @@ class Pager extends React.Component {
         <button key="rdarrow" disabled={currentPage >= totalPages-5} className="btn btn-primary" onClick={() => onLink(currentPage + 5)}>
           <FontAwesomeIcon icon={faAngleDoubleRight} ></FontAwesomeIcon>
         </button>
-        <button key="rarrow" disabled={currentPage === totalPages-1} className="btn btn-primary">
-          <FontAwesomeIcon icon={faAngleRight} onClick={() => onLink(currentPage + 1)}></FontAwesomeIcon>
+        <button key="rarrow" disabled={currentPage === totalPages-1} className="btn btn-primary" onClick={() => onLink(currentPage + 1)}>
+          <FontAwesomeIcon icon={faAngleRight}></FontAwesomeIcon>
         </button>
       </div>
     );
