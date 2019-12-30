@@ -119,15 +119,11 @@ class Queue extends React.Component {
             Toggle finished jobs
           </button>
         </div>
-        {
-          this.state.scan ? (
-            <ScanItem
-              scan={this.state.scan}
-              onStop={this.handleStopScan}
-              onAdd={this.handleAddScan}
-            ></ScanItem>
-          ) : ""
-        }
+        <ScanItem
+          scan={this.state.scan}
+          onStop={this.handleStopScan}
+          onAdd={this.handleAddScan}
+        ></ScanItem>
         <br></br>
         {
           this.state.paging ? (

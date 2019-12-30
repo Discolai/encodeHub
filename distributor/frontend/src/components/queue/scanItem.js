@@ -71,7 +71,7 @@ class ScanItem extends React.Component {
   }
 }
 ScanItem.propTypes = {
-  scan: PropTypes.object.isRequired,
+  scan: PropTypes.object,
   onStop: PropTypes.func.isRequired,
   onAdd: PropTypes.func.isRequired,
 }
