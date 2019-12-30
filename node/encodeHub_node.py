@@ -107,5 +107,5 @@ if __name__ == '__main__':
             pickle.dump(api.job_q, f)
         with open(api.paused_pickle, "wb") as f:
             pickle.dump(api.paused, f)
-        with open("node_config.json", "w") as f:
+        with open("config.json", "w") as f:
             config = json.dump(api.config, f)
