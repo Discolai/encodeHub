@@ -12,7 +12,7 @@ class AcceptPopup extends React.Component {
 
   getAcceptClasses = () =>  {
     let ret = "ml-3 btn btn-";
-    if (this.props.role === "Delete") {
+    if (this.props.type === "Delete") {
         return ret + "danger";
     } else {
       return ret + "primary";
@@ -52,7 +52,7 @@ class AcceptPopup extends React.Component {
               this.handleOpen();
             }}
           >
-            {this.props.role ? this.props.role : "Accept"}
+            {this.props.type ? this.props.type : "Accept"}
           </button>
         </Modal>
       </React.Fragment>
@@ -64,7 +64,7 @@ AcceptPopup.propTypes = {
   modalHdr: PropTypes.string.isRequired,
   onAccept: PropTypes.func.isRequired,
   payload:  PropTypes.object.isRequired,
-  role:     PropTypes.string,
+  type:     PropTypes.string,
   onCancel: PropTypes.func
 }
 

@@ -12,7 +12,7 @@ class Pager extends React.Component {
 
     const start = currentPage < 5 ? 0 : currentPage-5;
     const end = totalPages < start+10 ? totalPages : start + 10;
-    if (start != 0) {
+    if (start !== 0) {
       links.push(<button key="ldot" className="btn btn-primary">...</button>)
     }
     for (let i = start; i < end; i++) {

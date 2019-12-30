@@ -75,7 +75,7 @@ class NodeItem extends React.Component {
             modalHdr="Are you sure you want to delete this node?"
             onAccept={this.props.onDelete}
             payload={this.props.node}
-            role="Delete"
+            type="Delete"
           >
             <button className="btn btn-danger">
               <FontAwesomeIcon icon={faMinusCircle}></FontAwesomeIcon>

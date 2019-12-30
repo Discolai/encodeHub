@@ -19,7 +19,7 @@ class ScanItem extends React.Component {
                   modalHdr="Are you sure you want to stop this scan?"
                   onAccept={this.props.onStop}
                   payload={this.props.scan}
-                  role="Delete"
+                  type="Delete"
                 >
                   <button className="btn btn-danger">
                     <FontAwesomeIcon icon={faStopCircle}></FontAwesomeIcon>

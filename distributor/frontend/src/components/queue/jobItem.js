@@ -31,7 +31,7 @@ class JobItem extends React.Component {
               modalHdr="Do you really want delete this job"
               onAccept={this.props.onDelete}
               payload={this.props.job}
-              role="Delete"
+              type="Delete"
             >
             <button className="btn btn-danger">
               <FontAwesomeIcon icon={faTrash}></FontAwesomeIcon>
