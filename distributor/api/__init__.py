@@ -1,10 +1,17 @@
-from flask import Flask, render_template
-import json
+from flask import Flask, render_template, send_from_directory
+from werkzeug.routing import BaseConverter
+import json, os
 
 with open("config.json") as f:
     config = json.load(f)
 
-app = Flask(__name__, static_folder="../frontend/build/static", template_folder="../frontend/build")
+class RegexConverter(BaseConverter):
+    def __init__(self, url_map, *items):
+        super(RegexConverter, self).__init__(url_map)
+        self.regex = items[0]
+
+app = Flask(__name__, static_folder="../frontend/build")
+app.url_map.converters['regex'] = RegexConverter
 
 from api.jobs import jobs_bp
 from api.logs import logs_blu
@@ -21,6 +28,9 @@ def add_header(response):
     response.headers['Access-Control-Allow-Origin'] = '*'
     return response
 
-@app.route("/")
-def react():
-    return render_template('index.html')
+@app.route("/<regex('((?!api).)*$'):path>")
+def react(path):
+    if path != "" and os.path.exists(os.path.join(app.static_folder, path)):
+        return send_from_directory(app.static_folder, path)
+    else:
+        return send_from_directory(app.static_folder, 'index.html')
