@@ -3,7 +3,7 @@ import axios from 'axios'
 import NodeItem from './nodeItem'
 import LogItem from '../logs/logItem'
 import Navbar from '../navbar'
-
+import Pager from '../pager'
 import Container from 'react-bootstrap/Container'
 import Table from 'react-bootstrap/Table'
 
@@ -11,6 +11,8 @@ class Node extends React.Component {
   state = {
     nodes: [],
     logs: [],
+    page: 0,
+    paging: null,
     updateNode: false,
     updateLogs: false
   };
@@ -35,8 +37,8 @@ class Node extends React.Component {
   }
 
   getLogs(nid) {
-    axios.get(`/api/logs/node/${nid}`).then((response) => {
-      this.setState({logs: response.data.data})
+    axios.get(`/api/logs/node/${nid}`, {params: {page: this.state.page}}).then((response) => {
+      this.setState({logs: response.data.data,  paging: response.data.paging})
     }).catch((err) => {
       console.error(err);
     });
@@ -65,6 +67,19 @@ class Node extends React.Component {
   };
 
   render () {
+    const {page, paging} = this.state;
+    const pagination = (
+      <Pager
+        currentPage={page}
+        totalPages={paging ? paging.totalPages : 0}
+        onLink={(page) => {
+          if (page < paging.totalPages && page >= 0) {
+            this.setState({page: page}, () => this.getLogs(this.props.match.params.nid));
+          }
+        }}
+      ></Pager>
+    );
+
     return (
       <Container fluid>
         <Navbar updateView={() => this.getNodes()} nodes={this.state.nodes}>
@@ -84,6 +99,13 @@ class Node extends React.Component {
             })
           }
           <br></br>
+            {
+              this.state.paging ? (
+                <div className="row align-items-center justify-content-center mb-1">
+                  {pagination}
+                </div>
+              ) : ""
+            }
             <Table striped bordered hover size="sm">
               <thead className="thead-dark">
                 <tr>
@@ -106,6 +128,13 @@ class Node extends React.Component {
                 }
               </tbody>
             </Table>
+            {
+              this.state.paging ? (
+                <div className="row align-items-center justify-content-center mb-1">
+                  {pagination}
+                </div>
+              ) : ""
+            }
         </Navbar>
       </Container>
     );
