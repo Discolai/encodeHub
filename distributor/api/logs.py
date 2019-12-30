@@ -2,6 +2,7 @@ from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length
 from api.db import get_db
+from math import ceil
 
 logs_blu = Blueprint("logs", __name__)
 
@@ -38,9 +39,15 @@ def delete_log(lid):
 @logs_blu.route("/node/<int:nid>", methods=["GET"])
 def get_logs_for(nid):
     cur = get_db().cursor()
-    cur.execute("select * from (select * from nodes where nid = ?) natural join logs;", (nid,))
+
+    limit = int(request.args.get("limit", 20));
+    page = int(request.args.get("page", 0));
+    cur.execute("select count(lid) as count from logs;")
+    count = dict(cur.fetchall()[0])["count"]
+
+    cur.execute("select * from (select * from nodes where nid = ?) natural join logs limit ? offset ?;", (nid,limit, int(page*limit)))
     logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs})
+    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}})
 
 @logs_blu.route("/", methods=["POST"])
 def post_log_for():
