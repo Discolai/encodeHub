@@ -6,7 +6,7 @@ import NodeForm from './nodeForm'
 import ProgressBar from 'react-bootstrap/ProgressBar'
 
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
-import {faInfoCircle, faBuilding, faLocationArrow, faClock, faEdit, faMinusCircle} from '@fortawesome/free-solid-svg-icons'
+import {faInfoCircle, faBuilding, faLocationArrow, faClock, faEdit, faMinusCircle, faFileVideo} from '@fortawesome/free-solid-svg-icons'
 
 class NodeItem extends React.Component {
   state = {
@@ -117,9 +117,17 @@ class NodeItem extends React.Component {
                 <button className="btn btn-primary" onClick={this.handlePause}>Pause</button>
                 <button className="btn btn-danger" onClick={this.handleStop}>Stop</button>
               </div>
-              <ProgressBar now={this.state.progress.percentage} label={`${this.state.progress.percentage}%`}></ProgressBar>
               <div className="row px-md-n2">
                 <div className="col px-md-2">
+                  <FontAwesomeIcon className="mr-2" icon={faFileVideo}></FontAwesomeIcon>
+                  File
+                </div>
+                <div className="col px-md-2">
+                  {`{${this.state.progress.jid}} ${this.state.progress.job}`}
+                </div>
+              </div>
+              <div className="row px-md-n2">
+                <div className="col px-md-1">
                   <FontAwesomeIcon className="mr-2" icon={faClock}></FontAwesomeIcon>
                   {"Time"}
                 </div>
@@ -127,6 +135,7 @@ class NodeItem extends React.Component {
                   {this.state.progress.remaining_time}
                 </div>
               </div>
+              <ProgressBar animated={!this.state.progress.paused} now={this.state.progress.percentage} label={`${this.state.progress.percentage}%`}></ProgressBar>
             </div>
         ) :
           null
