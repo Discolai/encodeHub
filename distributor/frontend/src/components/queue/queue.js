@@ -18,6 +18,7 @@ class Queue extends React.Component {
   }
 
   componentDidMount() {
+    document.title = "Encode Hub"
     this.getJobs();
     this.getNodes();
     this.getScan();

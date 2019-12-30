@@ -18,6 +18,7 @@ class Node extends React.Component {
   };
 
   componentDidMount() {
+    document.title = `Node ${this.props.match.params.nid}`;
     this.getLogs(this.props.match.params.nid);
     this.getNodes();
   }
