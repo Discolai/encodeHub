@@ -42,7 +42,7 @@ def get_logs_for(nid):
 
     limit = int(request.args.get("limit", 20));
     page = int(request.args.get("page", 0));
-    cur.execute("select count(lid) as count from (select * from nodes where nid = ?) natural join logs;")
+    cur.execute("select count(lid) as count from (select * from nodes where nid = ?) natural join logs;", (nid,))
     count = dict(cur.fetchall()[0])["count"]
 
     cur.execute("select * from (select * from nodes where nid = ?) natural join logs limit ? offset ?;", (nid,limit, int(page*limit)))
