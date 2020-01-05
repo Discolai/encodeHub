@@ -4,7 +4,7 @@ import axios from 'axios'
 import AcceptPopup from '../acceptPopup'
 import NodeForm from './nodeForm'
 import ProgressBar from 'react-bootstrap/ProgressBar'
-
+import {msToHHMMSS} from '../../util'
 import {FontAwesomeIcon} from '@fortawesome/react-fontawesome'
 import {faInfoCircle, faBuilding, faLocationArrow, faClock, faEdit, faMinusCircle, faFileVideo} from '@fortawesome/free-solid-svg-icons'
 
@@ -132,7 +132,7 @@ class NodeItem extends React.Component {
                   {"Time"}
                 </div>
                 <div className="col px-md-2">
-                  {this.state.progress.remaining_time}
+                  {msToHHMMSS(this.state.progress.remaining_time)}
                 </div>
               </div>
               <ProgressBar animated={!this.state.progress.paused} now={this.state.progress.percentage} label={`${this.state.progress.percentage}%`}></ProgressBar>
