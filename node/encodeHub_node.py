@@ -46,6 +46,7 @@ def handle_job(j):
             print("Stopping job: ", j["job"])
             job.stop()
             api.stop = False
+            return
 
         if api.paused:
             job.pause()
@@ -64,7 +65,6 @@ def handle_job(j):
     report["jid"] = j["jid"]
     report["nid"] = api.config["nid"]
     send_report(report)
-    api.progress_q.clear()
     if api.config["delete_complete"]:
         os.remove(j["job"])
 
