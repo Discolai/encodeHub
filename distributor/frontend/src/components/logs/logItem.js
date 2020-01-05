@@ -1,9 +1,10 @@
 import React from 'react'
 import PropTypes from 'prop-types'
+import {msToHHMMSS} from '../../util'
 
 class LogItem extends React.Component {
   render () {
-    const {lid, jid, nid, audio, video, subtitle, lsize, prev_size, elapsed_time} = this.props.log;
+    const {lid, jid, nid, audio, video, subtitle, lsize, prev_size, elapsed_time_ms} = this.props.log;
     return (
       <tr>
         <th>{lid}</th>
@@ -14,7 +15,7 @@ class LogItem extends React.Component {
         <td>{subtitle} kiB</td>
         <td>{lsize} kiB</td>
         <td>{prev_size} kiB</td>
-        <td>{elapsed_time}</td>
+        <td>{msToHHMMSS(elapsed_time_ms)}</td>
       </tr>
     );
   }
