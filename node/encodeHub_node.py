@@ -1,7 +1,6 @@
 import json, time
 import threading
 import api
-import pickle
 import requests
 import signal
 import sys
@@ -101,11 +100,5 @@ if __name__ == '__main__':
     except:
         print("Intercepted KeyboardInterrupt")
     finally:
-        with open(api.progress_q_pickle, "wb") as f:
-            pickle.dump(api.progress_q, f)
-        with open(api.job_q_pickle, "wb") as f:
-            pickle.dump(api.job_q, f)
-        with open(api.paused_pickle, "wb") as f:
-            pickle.dump(api.paused, f)
         with open("config.json", "w") as f:
             config = json.dump(api.config, f)
