@@ -11,7 +11,7 @@ class LogSchema(Schema):
     jid = fields.Int(required=True)
     drop_frames = fields.Int(required=True)
     dup_frames = fields.Int(required=True)
-    elapsed_time = fields.Str(required=True)
+    elapsed_time_ms = fields.Int(required=True)
     video = fields.Int(required=True)
     audio = fields.Int(required=True)
     subtitle = fields.Int(required=True)
@@ -67,3 +67,41 @@ def post_log_for():
     if log["finished"]:
         cur.execute("update jobs set finished=1 where jid=?;", (log["jid"],))
     return Response(), 201
+
+
+@logs_blu.route("/status", methods=["GET"])
+def get_status():
+    cur = get_db().cursor()
+    limit = int(request.args.get("limit", 20));
+    page = int(request.args.get("page", 0));
+    cur.execute("select count(distinct nid) as count from logs;")
+    count = dict(cur.fetchall()[0])["count"]
+
+    sql = (
+        "select nid, name, (sum(prev_size)-sum(lsize)) as saved_space, "
+        "t.sum_etime, t.completed_count, (t.sum_etime/t.completed_count) as average_etime from logs "
+        "natural join "
+        "(select nid, sum(elapsed_time_ms) as sum_etime , count(nid) as completed_count from logs group by nid) as t "
+        "natural join "
+        "(select nid, name from nodes) "
+        "group by nid;"
+    )
+    cur.execute(sql)
+    logs = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}})
+
+@logs_blu.route("/status/<int:nid>", methods=["GET"])
+def get_status_for(nid):
+    cur = get_db().cursor()
+
+    sql = (
+        "select nid, name, (sum(prev_size)-sum(lsize)) as saved_space, "
+        "t.sum_etime, t.completed_count, (t.sum_etime/t.completed_count) as average_etime from logs "
+        "natural join "
+        "(select nid, sum(elapsed_time_ms) as sum_etime , count(nid) as completed_count from logs where nid=?) as t "
+        "natural join "
+        "(select nid, name from nodes where nid=?);"
+    )
+    cur.execute(sql, (nid, nid))
+    logs = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": logs[0] if len(logs) else None})

@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS logs (
   jid INTEGER NOT NULL REFERENCES nodes(nid),
   dup_frames INTEGER NOT NULL,
   drop_frames INTEGER NOT NULL,
-  elapsed_time DATETIME NOT NULL,
+  elapsed_time_ms INTEGER NOT NULL,
   video INTEGER NOT NULL,
   audio INTEGER NOT NULL,
   subtitle INTEGER NOT NULL,

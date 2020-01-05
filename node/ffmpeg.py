@@ -1,6 +1,7 @@
-import re, signal, pexpect, datetime
+import re, signal, pexpect, time
 from pydoc import locate
 
+millis_now = lambda: int(round(time.time() * 1000))
 
 class DurationError(Exception):
     pass
@@ -31,7 +32,7 @@ class FFmpeg:
 
     report_params = [
         "audio", "video", "subtitle", "global_headers", "other_streams", "lsize",
-        "drop_frames", "dup_frames", "elapsed_time", "muxing_overhead"
+        "drop_frames", "dup_frames", "elapsed_time_ms", "muxing_overhead"
     ]
 
     def __init__(self, inargs, input, outargs, output):
@@ -46,16 +47,16 @@ class FFmpeg:
 
     def start(self):
         self._p = pexpect.spawn(self.cmd)
-        self._elapsed.append([datetime.datetime.now(), None])
+        self._elapsed.append([millis_now(), None])
         self._get_duration()
         self.exp_list = self._p.compile_pattern_list([pexpect.EOF, "(.+)"])
 
     def pause(self):
-        self._elapsed[-1][1] = datetime.datetime.now()
+        self._elapsed[-1][1] = millis_now()
         self._p.kill(signal.SIGSTOP)
 
     def resume(self):
-        self._elapsed.append([datetime.datetime.now(), None])
+        self._elapsed.append([millis_now(), None])
         self._p.kill(signal.SIGCONT)
 
     def stop(self):
@@ -64,14 +65,14 @@ class FFmpeg:
     def _stop(self):
         self._p.close()
 
-        self._elapsed[-1][1] = datetime.datetime.now()
-        self.report["elapsed_time"] = self.get_elapsed_time()
+        self._elapsed[-1][1] = millis_now()
+        self.report["elapsed_time_ms"] = self.get_elapsed_time()
 
     def get_elapsed_time(self):
-        elapsed = datetime.timedelta(0)
+        elapsed = 0
         for times in self._elapsed:
-            elapsed += (times[1] if times[1] else datetime.datetime.now()) - times[0]
-        return str(elapsed)
+            elapsed += (times[1] if times[1] else millis_now()) - times[0]
+        return elapsed
 
     def has_finished(self):
         return self._finished
@@ -87,7 +88,7 @@ class FFmpeg:
         return int((out_time/duration) * 100)
 
     def _remaining_time(self, out_time, duration, speed):
-        return ms_to_hhmmssms((duration-out_time)/speed)
+        return int((duration-out_time)/speed)
 
     def auto_cast(self, progress):
         res = {}
@@ -120,7 +121,7 @@ class FFmpeg:
                 self.progress["percentage"] = None
                 self.progress["remaining_time"] = None
 
-            self.progress["elapsed_time"] = self.get_elapsed_time()
+            self.progress["elapsed_time_ms"] = self.get_elapsed_time()
             if self.progress["progress"] in ["end", "stop"]:
                 self.report = {key:self.progress[key] for key in self.report_params}
                 self.report["finished"] = False if self.progress["progress"] == "stop" else True
