@@ -1,4 +1,4 @@
-import json, time, threading, api, requests, signal, sys, os
+import json, time, threading, api, requests, os
 from ffmpeg import FFmpeg
 
 def request_job():
