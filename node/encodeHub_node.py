@@ -46,6 +46,7 @@ def handle_job(j):
             print("Stopping job: ", j["job"])
             job.stop()
             api.stop = False
+            return
 
         if api.paused:
             job.pause()
@@ -59,14 +60,14 @@ def handle_job(j):
         progress = {**progress, **j}
         api.progress_q.insert(0, progress)
 
-    report = job.report.copy()
-    report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
-    report["jid"] = j["jid"]
-    report["nid"] = api.config["nid"]
-    send_report(report)
-    api.progress_q.clear()
-    if api.config["delete_complete"]:
-        os.remove(j["job"])
+    if job.has_finished():
+        report = job.report.copy()
+        report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
+        report["jid"] = j["jid"]
+        report["nid"] = api.config["nid"]
+        send_report(report)
+        if api.config["delete_complete"]:
+            os.remove(j["job"])
 
 def main():
     api_thread = threading.Thread(target=api.run, daemon=True)
@@ -78,7 +79,6 @@ def main():
                 time.sleep(api.config["sleeptime"])
             else:
                 api.job_q.append(r)
-
 
         try:
             api.stop = False
@@ -96,9 +96,9 @@ if __name__ == '__main__':
     try:
         main()
     except Exception as e:
-        print("Intercepted exception: ", e)
+        raise e
     except:
-        print("Intercepted KeyboardInterrupt")
+        pass
     finally:
         with open("config.json", "w") as f:
             config = json.dump(api.config, f)
