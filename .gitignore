@@ -1,3 +1,5 @@
+node/config.json
+distributor/config.json
 *.mkv
 *.pkl
 
