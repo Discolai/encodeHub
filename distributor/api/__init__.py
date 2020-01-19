@@ -2,7 +2,8 @@ from flask import Flask, render_template, send_from_directory
 from werkzeug.routing import BaseConverter
 import json, os
 
-with open("config.json") as f:
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
     config = json.load(f)
 
 class RegexConverter(BaseConverter):

@@ -1,10 +1,4 @@
-import json, time
-import threading
-import api
-import requests
-import signal
-import sys
-import os
+import json, time, threading, api, requests, signal, sys, os
 from ffmpeg import FFmpeg
 
 def request_job():
@@ -100,5 +94,5 @@ if __name__ == '__main__':
     except:
         pass
     finally:
-        with open("config.json", "w") as f:
-            config = json.dump(api.config, f)
+        with open(os.path.join(api.BASE_DIR, "config.json"), "w") as f:
+            config = json.dump(api.config, f, indent="\t", separators=(',', ': '))
