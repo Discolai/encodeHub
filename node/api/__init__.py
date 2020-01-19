@@ -1,20 +1,21 @@
 from flask import Flask
 from collections import deque
-import json
+import json, os
 from api.queue import queue_bp
 from api.job import job_bp
 from api.config import config_bp
 
 app = Flask(__name__)
 
-with open("config.json", "r") as f:
-    config = json.load(f)
 
 stop = False
 paused = False
 progress_q = deque()
 job_q = deque()
+BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
+with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
+    config = json.load(f)
 
 app.register_blueprint(queue_bp, url_prefix="/queue")
 app.register_blueprint(job_bp, url_prefix="/job")
