@@ -1,10 +1,20 @@
 from flask import Flask, render_template, send_from_directory
 from werkzeug.routing import BaseConverter
-import json, os
+import json, os, sqlite3
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
     config = json.load(f)
+
+db = os.path.join(BASE_DIR, config["database"])
+if not os.path.isfile(db) or os.path.getsize(db) == 0 :
+    with open(os.path.join(BASE_DIR, "../db/schema.sql"), "r") as f:
+        schema = f.read()
+    conn = sqlite3.connect(os.path.join(BASE_DIR, config["database"]))
+    cur = conn.cursor()
+    cur.executescript(schema)
+    conn.commit()
+    conn.close()
 
 class RegexConverter(BaseConverter):
     def __init__(self, url_map, *items):
