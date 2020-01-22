@@ -45,7 +45,7 @@ def get_logs_for(nid):
     cur = get_db().cursor()
 
     pageSize = int(request.args.get("pageSize", 20));
-    page = int(request.args.get("page", 2)) - 1; # subtract 1 so pages start at 0
+    page = int(request.args.get("page", 1)) - 1; # subtract 1 so pages start at 0
     PagingSchema().load({"page": page, "pageSize": pageSize})
 
     cur.execute("select count(lid) as count from (select * from nodes where nid = ?) natural join logs;", (nid,))
@@ -53,7 +53,7 @@ def get_logs_for(nid):
 
     cur.execute("select * from (select * from nodes where nid = ?) natural join logs natural join jobs limit ? offset ?;", (nid,pageSize, int(page*pageSize)))
     logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalResults": count, "pageSize": pageSize}})
+    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page+1, "totalResults": count, "pageSize": pageSize}})
 
 @logs_blu.route("/", methods=["POST"])
 def post_log_for():
