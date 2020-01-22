@@ -180,7 +180,7 @@ class Node extends React.Component {
                             dataSource={logs}
                             currentPage={page}
                             pageSize={pageSize}
-                            totalPages={paging ? paging.totalResults : 0}
+                            totalItems={paging ? paging.totalResults : 0}
                             pageSizeOptions={['10', '20', '30']}
                             onPageChange={this.handlePagination}
                             onSizeChange={this.handlePageSize}

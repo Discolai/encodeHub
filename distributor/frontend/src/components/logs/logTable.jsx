@@ -41,7 +41,7 @@ class LogTable extends React.Component {
   ];
 
   render () {
-    const {dataSource, currentPage, pageSize, totalPages, onPageChange, onSizeChange, pageSizeOptions} = this.props;
+    const {dataSource, currentPage, pageSize, totalItems, onPageChange, onSizeChange, pageSizeOptions} = this.props;
     return (
       <Table
         rowKey="lid"
@@ -50,7 +50,7 @@ class LogTable extends React.Component {
         pagination={{
           current: currentPage,
           size: pageSize,
-          total: totalPages,
+          total: totalItems,
           showSizeChanger: true,
           pageSizeOptions: pageSizeOptions || ['10', '20', '30'],
           onChange: onPageChange,
@@ -65,7 +65,7 @@ LogTable.propTypes = {
   dataSource: PropTypes.array.isRequired,
   currentPage: PropTypes.number.isRequired,
   pageSize: PropTypes.number.isRequired,
-  totalPages: PropTypes.number.isRequired,
+  totalItems: PropTypes.number.isRequired,
   onPageChange: PropTypes.func.isRequired,
   onSizeChange: PropTypes.func.isRequired,
   pageSizeOptions: PropTypes.array,
