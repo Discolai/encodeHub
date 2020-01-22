@@ -34,9 +34,7 @@ class NodeItem extends React.Component {
     if (node) {
       axios.get(`${node.address}/job/progress`).then((response) => {
         const status = response.data.data.paused ? "Paused" : "Running";
-        if (response.data.data.bitrate) {
-          this.setState({progress: response.data.data, status: status});
-        }
+        this.setState({progress: response.data.data, status: status});
       }).catch((err) => {
         if (err.response && err.response.status === 404) {
           this.setState({progress: null, status: "Polling"})
