@@ -106,11 +106,7 @@ class Node extends React.Component {
     const {page, paging, pageSize, nodes, logs} = this.state;
     const { nid } = this.props.match.params;
 
-    let node = nodes.filter((node) => {
-      return node.nid === parseInt(nid, 10);
-    });
-    node = node.length ? node[0] : null;
-
+    const node = nodes.find((node) => node.nid === parseInt(nid, 10));
 
     const crumb = nid ? (
       <Breadcrumb.Item>
