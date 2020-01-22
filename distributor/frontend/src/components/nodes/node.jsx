@@ -1,11 +1,12 @@
 import React from 'react'
 import axios from 'axios'
 import NodeItem from './nodeItem'
-import { Layout, Breadcrumb, Menu, Icon } from 'antd';
+import { Layout, Breadcrumb, Menu, Icon, notification} from 'antd';
 import { Link } from 'react-router-dom';
 import Base from '../base';
 import LogTable from '../logs/logTable';
 import NodeForm from './nodeForm.jsx';
+import {errorNotification} from '../../util';
 
 const { Content, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -18,21 +19,21 @@ class Node extends React.Component {
     page: 1,
     pageSize: 10,
     paging: null,
-    updateNode: false,
-    updateLogs: false
   };
 
   componentDidMount() {
-    document.title = `Node ${this.props.match.params.nid}`;
+    const {nid} = this.props.match.params;
+    document.title = `Node ${nid}`;
     this.getNodes();
-    if (this.props.match.params.nid) {
-      this.getLogs(this.props.match.params.nid);
+    if (nid) {
+      this.getLogs(nid);
     }
   }
 
   componentDidUpdate(prevProps) {
-    if (this.props.match.params.nid !== prevProps.match.params.nid || this.state.updateLogs) {
-      this.getLogs(this.props.match.params.nid);
+    const {nid} = this.props.match.params;
+    if (nid && nid !== prevProps.match.params.nid) {
+      this.getLogs(nid);
     }
   }
 
@@ -40,7 +41,7 @@ class Node extends React.Component {
     axios.get("/api/nodes").then((response) => {
       this.setState({nodes: response.data.data})
     }).catch((err) => {
-      console.error(err);
+      errorNotification(err);
     });
   }
 
@@ -49,7 +50,7 @@ class Node extends React.Component {
     axios.get(`/api/logs/node/${nid}`, {params: {page, pageSize}}).then((response) => {
       this.setState({logs: response.data.data,  paging: response.data.paging})
     }).catch((err) => {
-      console.error(err);
+      errorNotification(err);
     });
   }
 
@@ -58,17 +59,24 @@ class Node extends React.Component {
     .then((response) => {
       this.getNodes();
       this.props.history.push(`/nodes/${response.data.data.id}`);
+    })
+    .catch((err) => {
+      errorNotification(err);
     });
   };
 
   handleDelete = (node) => {
     axios.delete(`/api/nodes/${node.nid}`)
     .then((response) => {
-      console.log("Deleted");
-      this.props.history.push("/");
+      notification.open({
+        message: "Info",
+        description: `Deleted ${node.name}`
+      });
+      this.getNodes();
+      this.props.history.push("/nodes");
     })
     .catch((err) => {
-      console.log(err.response.data);
+      errorNotification(err);
     });
   };
 
@@ -78,7 +86,7 @@ class Node extends React.Component {
       this.getNodes();
     })
     .catch((err) => {
-      console.log(err.response.data);
+      errorNotification(err);
     })
   };
 
@@ -97,20 +105,20 @@ class Node extends React.Component {
   render () {
     const {page, paging, pageSize, nodes, logs} = this.state;
     const { nid } = this.props.match.params;
-    const node = nodes.filter((node) => {
-      return node.nid === parseInt(nid, 10);
-    })
 
-    let crumb = null;
-    if (nid) {
-      crumb = (
-        <Breadcrumb.Item>
-          <Link to={`/nodes/${nid}`}>
-            {nid}
-          </Link>
-        </Breadcrumb.Item>
-      );
-    }
+    let node = nodes.filter((node) => {
+      return node.nid === parseInt(nid, 10);
+    });
+    node = node.length ? node[0] : null;
+
+
+    const crumb = nid ? (
+      <Breadcrumb.Item>
+        <Link to={`/nodes/${nid}`}>
+          {node ? node.name : nid}
+        </Link>
+      </Breadcrumb.Item>
+    ) : null;
 
     const nodeLinks = nodes.map((node) => {
       return (
@@ -160,29 +168,26 @@ class Node extends React.Component {
                 nid ? (
                   <React.Fragment>
                     {
-                      nodes.map((node) => {
-                        if (node.nid === parseInt(nid, 10)) {
-                          return (
-                            <NodeItem
-                              key={node.nid}
-                              node={node}
-                              onEdit={this.handleEdit}
-                              onDelete={this.handleDelete}
-                            ></NodeItem>
-                          );
-                        }
-                        return null
-                      })
+                      node ? (
+                        <React.Fragment>
+                          <NodeItem
+                            key={node.nid}
+                            node={node}
+                            onEdit={this.handleEdit}
+                            onDelete={this.handleDelete}
+                          />
+                          <LogTable
+                            dataSource={logs}
+                            currentPage={page}
+                            pageSize={pageSize}
+                            totalPages={paging ? paging.totalResults : 0}
+                            pageSizeOptions={['10', '20', '30']}
+                            onPageChange={this.handlePagination}
+                            onSizeChange={this.handlePageSize}
+                          />
+                        </React.Fragment>
+                      ) : null
                     }
-                    <LogTable
-                      dataSource={logs}
-                      currentPage={page}
-                      pageSize={pageSize}
-                      totalPages={paging ? paging.totalResults : 0}
-                      pageSizeOptions={['10', '20', '30']}
-                      onPageChange={this.handlePagination}
-                      onSizeChange={this.handlePageSize}
-                    />
                   </React.Fragment>
                 ) : (
                   <NodeForm
@@ -191,7 +196,6 @@ class Node extends React.Component {
                   />
                 )
               }
-
             </Content>
           </Layout>
       </Content>

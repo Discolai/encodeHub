@@ -1,16 +1,16 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import {msToHHMMSS} from '../../util';
+import {msToHHMMSS, errorNotification} from '../../util';
 import NodeForm from './nodeForm.jsx';
-import { Card, Icon, Row, Col, Progress, Popconfirm, Button, Form } from 'antd';
+import { Card, Icon, Row, Col, Progress, Popconfirm, Button, notification } from 'antd';
 
 class NodeItem extends React.Component {
   state = {
     node: this.props.node,
     progress: null,
     status: "Offline",
-    showForm: false
+    showForm: false,
   }
   timer = null;
 
@@ -51,22 +51,35 @@ class NodeItem extends React.Component {
     const {node} = this.state;
     axios.post(`${node.address}/job/stop`)
     .catch((err) => {
-      console.error(err);
-    })
-
+      errorNotification(err);
+    });
   };
 
   handlePause = () => {
     const {node} = this.state;
     axios.post(`${node.address}/job/pause`)
     .catch((err) => {
-      console.error(err);
-    })
+      errorNotification(err);
+    });
   };
 
   toggleForm = () => {
     this.setState({showForm: !this.state.showForm});
   };
+
+  pushConfig = () => {
+    const {node} = this.state;
+    axios.post(`/api/nodes/setup/${node.nid}`)
+    .then((response) => {
+      notification.open({
+        message: "Info",
+        description: `Pushed config to ${node.name}`
+      });
+    })
+    .catch((err) => {
+      errorNotification(err);
+    })
+  }
 
 
   render () {
@@ -90,11 +103,12 @@ class NodeItem extends React.Component {
                 <Popconfirm
                   title="Are you sure？"
                   icon={<Icon type="question-circle-o" style={{ color: 'red' }} />}
-                  onAccept={() => onDelete(node)}
+                  onConfirm={(e) => onDelete(node)}
                 >
                   <Button icon="minus" type="danger" style={{marginRight: "10px"}}/>
                 </Popconfirm>
-                <Button icon="edit" type="primary" onClick={this.toggleForm}/>
+                <Button icon="edit" type="primary" style={{marginRight: "10px"}} onClick={this.toggleForm}/>
+                <Button type="primary" onClick={this.pushConfig}>Push config</Button>
               </Row>
               <Row type="flex" style={{alignItems: "center", marginTop: "30px"}}>
                 <Col span={12}>

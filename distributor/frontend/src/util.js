@@ -1,3 +1,6 @@
+import React from 'react'
+import {notification} from 'antd';
+
 function msToHHMMSS(s) {
   let ms = s % 1000;
   s = (s - ms) / 1000;
@@ -15,4 +18,19 @@ function validURL(str) {
   return !!pattern.test(str);
 }
 
-module.exports = {msToHHMMSS, validURL, URLPattern};
+function errorNotification(err) {
+  const res = err.response ? err.response.data.err : "Request timed out.";
+
+  let desc = res;
+  if (typeof(res) === "object") {
+    for (var key in res) {
+      desc.push(<li key={key}>res[key]</li>);
+    }
+  }
+  notification.open({
+    message: "Error",
+    description: desc
+  });
+}
+
+module.exports = {msToHHMMSS, validURL, URLPattern, errorNotification};
