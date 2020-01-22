@@ -56,7 +56,7 @@ def handle_job(j):
 
     if job.has_finished():
         report = job.report.copy()
-        report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
+        report["prev_size"] = os.path.getsize(j["job"])/1048576 # convert to mebibytes
         report["jid"] = j["jid"]
         report["nid"] = api.config["nid"]
         send_report(report)

@@ -66,6 +66,7 @@ class FFmpeg:
         self._p.close()
 
         self._elapsed[-1][1] = millis_now()
+        self.report = self.report if self.report else {}
         self.report["elapsed_time_ms"] = self.get_elapsed_time()
 
     def get_elapsed_time(self):
@@ -124,6 +125,7 @@ class FFmpeg:
             self.progress["elapsed_time_ms"] = self.get_elapsed_time()
             if self.progress["progress"] in ["end", "stop"]:
                 self.report = {key:self.progress[key] for key in self.report_params}
+                self.report["lsize"] /= 1024 # convert to mebibytes
                 self.report["finished"] = False if self.progress["progress"] == "stop" else True
 
         return self.progress
