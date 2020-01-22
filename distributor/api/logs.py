@@ -1,6 +1,7 @@
 from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load
-from marshmallow.validate import Length
+from marshmallow.validate import Length, Range
+from marshmallow.exceptions import ValidationError
 from api.db import get_db
 from math import ceil
 
@@ -22,6 +23,9 @@ class LogSchema(Schema):
     muxing_overhead = fields.Float(required=True)
     finished = fields.Bool(required=True)
 
+class PagingSchema(Schema):
+    page = fields.Int(required=True, validate=[Range(min=0, error="Pages start at 1")])
+    pageSize = fields.Int(required=True, validate=[Range(min=10, max=100, error="Page size can be between 10 and 100")])
 
 @logs_blu.route("/", methods=["GET"])
 def get_logs():
@@ -40,14 +44,16 @@ def delete_log(lid):
 def get_logs_for(nid):
     cur = get_db().cursor()
 
-    limit = int(request.args.get("limit", 20));
-    page = int(request.args.get("page", 0));
+    pageSize = int(request.args.get("pageSize", 20));
+    page = int(request.args.get("page", 2)) - 1; # subtract 1 so pages start at 0
+    PagingSchema().load({"page": page, "pageSize": pageSize})
+
     cur.execute("select count(lid) as count from (select * from nodes where nid = ?) natural join logs;", (nid,))
     count = dict(cur.fetchall()[0])["count"]
 
-    cur.execute("select * from (select * from nodes where nid = ?) natural join logs limit ? offset ?;", (nid,limit, int(page*limit)))
+    cur.execute("select * from (select * from nodes where nid = ?) natural join logs natural join jobs limit ? offset ?;", (nid,pageSize, int(page*pageSize)))
     logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}})
+    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalResults": count, "pageSize": pageSize}})
 
 @logs_blu.route("/", methods=["POST"])
 def post_log_for():
