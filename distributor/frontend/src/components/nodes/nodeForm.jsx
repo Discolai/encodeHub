@@ -43,8 +43,7 @@ class NodeForm extends React.Component {
                         message: "The name cannot be longer than 255 characters!"
                       }
                     ],
-              })
-              (<Input/>)
+              })(<Input/>)
             }
           </Form.Item>
           <Form.Item
@@ -67,8 +66,7 @@ class NodeForm extends React.Component {
                       message: "The url cannot be longer than 255 characters!"
                     }
                   ],
-            })
-            (<Input/>)
+            })(<Input/>)
           }
           </Form.Item>
           <Form.Item>

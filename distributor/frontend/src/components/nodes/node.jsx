@@ -1,7 +1,7 @@
 import React from 'react'
 import axios from 'axios'
 import NodeItem from './nodeItem'
-import { Layout, Breadcrumb, Menu, Icon, notification} from 'antd';
+import { Layout, Breadcrumb, Menu, Icon, notification, BackTop} from 'antd';
 import { Link } from 'react-router-dom';
 import Base from '../base';
 import LogTable from '../logs/logTable';
@@ -128,6 +128,7 @@ class Node extends React.Component {
 
     return (
       <Base currentPage="Nodes">
+        <BackTop/>
         <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
             <Breadcrumb.Item>
