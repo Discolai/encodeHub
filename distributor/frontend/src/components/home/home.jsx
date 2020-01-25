@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Layout, Breadcrumb, Menu, Icon, Button, notification, Row, Col} from 'antd';
+import { Layout, Breadcrumb, Menu, Button, notification, Row, Col, BackTop} from 'antd';
 import Base from '../base';
 import JobTable from '../queue/jobTable';
 import JobForm from '../queue/jobForm';
@@ -21,7 +21,7 @@ class Home extends React.Component {
     page: 1,
     pageSize: 10,
     paging: null,
-    edit: null
+    showForm: false
   }
 
   componentDidMount() {
@@ -100,20 +100,34 @@ class Home extends React.Component {
     });
   }
 
-  toggleForm = (jid) => {
-    this.setState({edit: jid});
+  toggleForm = () => {
+    this.setState({showForm: !this.state.showForm});
   };
 
   toggleJobs = () => {
-    this.setState({finished: !this.state.finished}, this.getJobs);
+    this.setState({finished: !this.state.finished, page: 1}, this.getJobs);
+  }
+
+  getTableTitle = () => {
+    return (
+      <Row>
+        <Col span={6}>
+          <Button type="primary" style={{marginRight: "10px"}} onClick={this.toggleJobs}>Toggle job status</Button>
+          <Button type="primary" onClick={this.toggleForm}>New job</Button>
+        </Col>
+        <Col span={12}>
+          <h2>{this.state.finished ? "Finished jobs" : "Scheduled jobs"}</h2>
+        </Col>
+      </Row>
+    );
   }
 
   render () {
-    const {nodes, jobs, finished, scan, page, pageSize, paging, edit} = this.state;
-    const job = edit ? jobs.find((job) => job.jid === parseInt(edit, 10)) : null;
+    const {nodes, jobs, page, pageSize, paging, showForm} = this.state;
 
     return (
       <Base currentPage="Home">
+        <BackTop/>
         <Content style={{ padding: '0 50px' }}>
           <Breadcrumb style={{ margin: '16px 0' }}>
             <Breadcrumb.Item>
@@ -147,36 +161,33 @@ class Home extends React.Component {
             </Sider>
             <Content style={{ padding: '0 24px', minHeight: 280 }}>
               {
-                edit ? (
-                  <JobForm
-                    title={`Edit job ${edit}`}
-                    job={job}
-                    nodes={nodes}
-                    onSubmit={this.handleEditJob}
-                    onCancel={() => this.toggleForm(null)}
-                  />
+                showForm ? (
+                  <React.Fragment>
+                    <JobForm
+                      style={{marginTop: "20px", marginBottom: "20px"}}
+                      title={"Add new job"}
+                      nodes={nodes}
+                      onSubmit={this.handleNewJob}
+                      onCancel={this.toggleForm}
+                    />
+                  <br/>
+                  </React.Fragment>
                 ) : null
               }
               {
                 paging ? (
                   <React.Fragment>
-                    <Row style={{alignItems: "center", marginTop: "10px"}}>
-                      <Col span={6}>
-                        <Button type="primary" onClick={this.toggleJobs}>Toggle jobs</Button>
-                      </Col>
-                      <Col span={12}>
-                        <h2 style={{textAlign: "center"}}>{finished ? "Finished jobs" : "Scheduled jobs"}</h2>
-                      </Col>
-                    </Row>
                     <JobTable
+                      title={this.getTableTitle}
                       dataSource={jobs}
+                      nodes={nodes}
                       currentPage={page}
                       pageSize={pageSize}
                       totalItems={paging.totalResults}
                       pageSizeOptions={['10', '20', '30']}
                       onPageChange={this.handlePagination}
                       onSizeChange={this.handlePageSize}
-                      onEdit={this.toggleForm}
+                      onEdit={this.handleEditJob}
                       onDelete={this.handleDeleteJob}
                       />
                   </React.Fragment>

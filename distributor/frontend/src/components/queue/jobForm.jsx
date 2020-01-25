@@ -8,7 +8,7 @@ class JobForm extends React.Component {
   handleSubmit = (e) => {
     const {onSubmit, onCancel, job} = this.props;
     e.preventDefault();
-    this.props.form.validateFields((err, values) => {
+    this.props.form.validateFieldsAndScroll((err, values) => {
       if (!err) {
         job ? onSubmit(job.jid, values) : onSubmit(values);
         if (onCancel) {
@@ -47,14 +47,12 @@ class JobForm extends React.Component {
                         message: "The job path cannot be longer than 255 characters!"
                       }
                     ],
-              })
-              (<Input/>)
+              })(<Input/>)
             }
           </Form.Item>
           <Form.Item label="Node">
             {
-              getFieldDecorator('nid', {initialValue: job ? job.name : "null"})
-              (
+              getFieldDecorator('nid', {initialValue: job ? job.nid : null})(
                 <Select style={{width: "200px"}}>
                   <Option key={null} value={null}>**unassigned**</Option>
                   {options}
@@ -64,8 +62,10 @@ class JobForm extends React.Component {
           </Form.Item>
           <Form.Item label="Finished">
             {
-              getFieldDecorator('finished', {initialValue: job && job.finished, valuePropName: "checked"})
-              (<Checkbox />)
+              getFieldDecorator('finished', {
+                initialValue: job && job.finished,
+                valuePropName: "checked"
+              })(<Checkbox />)
             }
           </Form.Item>
           <Form.Item>
