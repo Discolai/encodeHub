@@ -158,13 +158,13 @@ class NodeItem extends React.Component {
                       style={{marginTop: "0.5em"}}
                       infoTitle="Total finished encodes"
                       icon="number"
-                      info={nodeInfo.finished_count}
+                      info={nodeInfo.finished_count || 0}
                     />
                     <InfoItem
                       style={{marginTop: "0.5em"}}
                       infoTitle="Total saved space"
                       icon="file"
-                      info={humanReadableFilesize(nodeInfo.saved_space)}
+                      info={humanReadableFilesize(nodeInfo.saved_space || 0)}
                     />
                   </React.Fragment>
                 ) : null
