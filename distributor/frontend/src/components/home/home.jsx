@@ -110,12 +110,12 @@ class Home extends React.Component {
 
   getTableTitle = () => {
     return (
-      <Row>
-        <Col span={6}>
-          <Button type="primary" style={{marginRight: "10px"}} onClick={this.toggleJobs}>Toggle job status</Button>
+      <Row type="flex" justify="space-around">
+        <Col>
+          <Button type="primary" style={{marginRight: "0.5em"}} onClick={this.toggleJobs}>Toggle job status</Button>
           <Button type="primary" onClick={this.toggleForm}>New job</Button>
         </Col>
-        <Col span={12}>
+        <Col>
           <h2>{this.state.finished ? "Finished jobs" : "Scheduled jobs"}</h2>
         </Col>
       </Row>
