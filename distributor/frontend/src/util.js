@@ -8,7 +8,7 @@ function msToHHMMSS(s) {
   s = (s - secs) / 60;
   let mins = s % 60;
   let hrs = (s - mins) / 60;
-  return `${("00"+hrs).slice(-2)}:${("00"+mins).slice(-2)}:${("00."+secs).slice(-2)}.${ms}`;
+  return `${("00"+hrs).slice(-2)}:${("00"+mins).slice(-2)}:${("00"+secs).slice(-2)}.${ms}`;
 }
 
 const URLPattern = "^(http://www.|https://www.|http://|https://)?[a-z0-9]+([-.]{1}[a-z0-9]+)*(:[0-9]{1,5})?(/.*)?$";
@@ -34,4 +34,12 @@ function errorNotification(err) {
   });
 }
 
-module.exports = {msToHHMMSS, validURL, URLPattern, errorNotification};
+function humanReadableFilesize(size) {
+  const gibSize = 1024;
+  const tibSize = 1048576;
+  if (size > gibSize) return `${Math.round((size/gibSize)*10)/10} GiB`;
+  if (size > tibSize) return `${Math.round((size/tibSize)*10)/10} Tib`;
+  return `${size} MiB`;
+}
+
+module.exports = {msToHHMMSS, validURL, URLPattern, errorNotification, humanReadableFilesize};
