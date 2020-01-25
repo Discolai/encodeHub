@@ -49,6 +49,38 @@ def delete_node(nid):
     cur.execute("delete from nodes where nid = ?;", (nid,))
     return Response()
 
+@nodes_bp.route("/info", methods=["GET"])
+def get_info():
+    cur = get_db().cursor()
+
+    sql = (
+        "select t.saved_space, t.finished_count, t.sum_etime, "
+        "(t.sum_etime/t.completed_count) as average_etime from "
+        "(select (sum(prev_size)-sum(lsize)) as saved_space, "
+        "count(lid) as finished_count, sum(elapsed_time_ms) as sum_etime, "
+        "count(lid) as completed_count from logs) as t"
+    )
+
+    cur.execute(sql)
+    info = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": info[0] if len(info) else None})
+
+@nodes_bp.route("/info/<int:nid>", methods=["GET"])
+def get_info_for(nid):
+    cur = get_db().cursor()
+
+    sql = (
+        "select nid, name, (sum(prev_size)-sum(lsize)) as saved_space, "
+        "t.sum_etime, t.finished_count, (t.sum_etime/t.finished_count) as average_etime from logs "
+        "natural join "
+        "(select nid, sum(elapsed_time_ms) as sum_etime , count(nid) as finished_count from logs where nid=?) as t "
+        "natural join "
+        "(select nid, name from nodes where nid=?);"
+    )
+    cur.execute(sql, (nid, nid))
+    info = [dict(row) for row in cur.fetchall()]
+    return jsonify({"err": None, "data": info[0] if len(info) else None})
+
 @nodes_bp.route("/setup/<int:nid>", methods=["POST"])
 def setup_node(nid):
     cur = get_db().cursor()
