@@ -1,7 +1,7 @@
 import React from 'react'
 import PropTypes from 'prop-types'
 import { Table } from 'antd';
-import {msToHHMMSS} from '../../util'
+import {msToHHMMSS, humanReadableFilesize} from '../../util'
 
 class LogTable extends React.Component {
   columns = [
@@ -24,16 +24,16 @@ class LogTable extends React.Component {
       title: "Size",
       dataIndex: "lsize",
       key: "lsize",
-      render: (text) => `${text} Mib`
+      render: (text) => humanReadableFilesize(text)
     },
     {
       title: "Previous size",
       dataIndex: "prev_size",
       key: "prev_size",
-      render: (text) => `${text} Mib`
+      render: (text) => humanReadableFilesize(text)
     },
     {
-      title: "Elapsed time",
+      title: "Encode time",
       dataIndex: "elapsed_time_ms",
       key: "elapsed_time_ms",
       render: (text) => msToHHMMSS(text)
