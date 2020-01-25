@@ -1,12 +1,13 @@
 import React from 'react'
 import axios from 'axios'
 import NodeItem from './nodeItem'
-import { Layout, Breadcrumb, Menu, Icon, notification, BackTop} from 'antd';
-import { Link } from 'react-router-dom';
+import {Layout, Breadcrumb, Menu, Icon, notification, BackTop, Card, Row} from 'antd';
+import {Link} from 'react-router-dom';
 import Base from '../base';
 import LogTable from '../logs/logTable';
 import NodeForm from './nodeForm.jsx';
-import {errorNotification} from '../../util';
+import InfoItem from '../infoItem';
+import {errorNotification, msToHHMMSS, humanReadableFilesize} from '../../util';
 
 const { Content, Sider } = Layout;
 const { SubMenu } = Menu;
@@ -15,6 +16,7 @@ const { SubMenu } = Menu;
 class Node extends React.Component {
   state = {
     nodes: [],
+    nodesInfo: null,
     logs: [],
     page: 1,
     pageSize: 10,
@@ -23,10 +25,13 @@ class Node extends React.Component {
 
   componentDidMount() {
     const {nid} = this.props.match.params;
-    document.title = `Node ${nid}`;
     this.getNodes();
     if (nid) {
+      document.title = `Node ${nid}`;
       this.getLogs(nid);
+    } else {
+      document.title = `Nodes`;
+      this.getNodesInfo();
     }
   }
 
@@ -35,23 +40,34 @@ class Node extends React.Component {
     if (nid && nid !== prevProps.match.params.nid) {
       this.getLogs(nid);
     }
+    if (!nid) {
+      this.getNodesInfo();
+    }
   }
 
   getNodes() {
-    axios.get("/api/nodes").then((response) => {
+    axios.get("/api/nodes")
+    .then((response) => {
       this.setState({nodes: response.data.data})
-    }).catch((err) => {
-      errorNotification(err);
-    });
+    })
+    .catch((err) => errorNotification(err));
+  }
+
+  getNodesInfo() {
+    axios.get("/api/nodes/info")
+    .then((response) => {
+      this.setState({nodesInfo: response.data.data})
+    })
+    .catch((err) => errorNotification(err));
   }
 
   getLogs(nid) {
     const {page, pageSize} = this.state;
-    axios.get(`/api/logs/node/${nid}`, {params: {page, pageSize}}).then((response) => {
+    axios.get(`/api/logs/node/${nid}`, {params: {page, pageSize}})
+    .then((response) => {
       this.setState({logs: response.data.data,  paging: response.data.paging})
-    }).catch((err) => {
-      errorNotification(err);
-    });
+    })
+    .catch((err) => errorNotification(err));
   }
 
   handleAdd = (values) => {
@@ -60,9 +76,7 @@ class Node extends React.Component {
       this.getNodes();
       this.props.history.push(`/nodes/${response.data.data.id}`);
     })
-    .catch((err) => {
-      errorNotification(err);
-    });
+    .catch((err) => errorNotification(err));
   };
 
   handleDelete = (node) => {
@@ -75,9 +89,7 @@ class Node extends React.Component {
       this.getNodes();
       this.props.history.push("/nodes");
     })
-    .catch((err) => {
-      errorNotification(err);
-    });
+    .catch((err) => errorNotification(err));
   };
 
   handleEdit = (nid, values) => {
@@ -85,9 +97,7 @@ class Node extends React.Component {
     .then((response) => {
       this.getNodes();
     })
-    .catch((err) => {
-      errorNotification(err);
-    })
+    .catch((err) => errorNotification(err));
   };
 
   handlePagination = (page, pageSize) => {
@@ -103,7 +113,7 @@ class Node extends React.Component {
   }
 
   render () {
-    const {page, paging, pageSize, nodes, logs} = this.state;
+    const {page, paging, pageSize, nodes, logs, nodesInfo} = this.state;
     const { nid } = this.props.match.params;
 
     const node = nodes.find((node) => node.nid === parseInt(nid, 10));
@@ -187,10 +197,49 @@ class Node extends React.Component {
                     }
                   </React.Fragment>
                 ) : (
-                  <NodeForm
-                    onSubmit={(values) => this.handleAdd(values)}
-                    title="Add new node"
-                  />
+                  <React.Fragment>
+                    {
+                      nodesInfo ? (
+                        <Card style={{backgroundColor: "#001529", color: "#FFF", marginBottom: "1em"}}>
+                          <Row type="flex" justify="center">
+                            <h1 style={{color: "#FFF"}}>Cluster info</h1>
+                          </Row>
+                          <InfoItem
+                            justify="center"
+                            infoTitle="Total encode time"
+                            icon="clock-circle"
+                            info={msToHHMMSS(nodesInfo.sum_etime)}
+                          />
+                          <InfoItem
+                            justify="center"
+                            style={{marginTop: "0.5em"}}
+                            infoTitle="Average encode time"
+                            icon="clock-circle"
+                            info={msToHHMMSS(nodesInfo.average_etime)}
+                          />
+                          <InfoItem
+                            justify="center"
+                            style={{marginTop: "0.5em"}}
+                            infoTitle="Total finished encodes"
+                            icon="number"
+                            info={nodesInfo.finished_count}
+                          />
+                          <InfoItem
+                            justify="center"
+                            style={{marginTop: "0.5em"}}
+                            infoTitle="Total saved space"
+                            icon="file"
+                            info={humanReadableFilesize(nodesInfo.saved_space)}
+                          />
+                        </Card>
+                      ) : null
+
+                    }
+                    <NodeForm
+                      onSubmit={(values) => this.handleAdd(values)}
+                      title="Add new node"
+                      />
+                  </React.Fragment>
                 )
               }
             </Content>
