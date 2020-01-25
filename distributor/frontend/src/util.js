@@ -37,8 +37,8 @@ function errorNotification(err) {
 function humanReadableFilesize(size) {
   const gibSize = 1024;
   const tibSize = 1048576;
+  if (size > tibSize) return `${Math.round((size/tibSize)*10)/10} TiB`;
   if (size > gibSize) return `${Math.round((size/gibSize)*10)/10} GiB`;
-  if (size > tibSize) return `${Math.round((size/tibSize)*10)/10} Tib`;
   return `${size} MiB`;
 }
 
