@@ -1,7 +1,7 @@
 import React from 'react';
 import axios from 'axios';
 import { Link } from 'react-router-dom';
-import { Layout, Breadcrumb, Menu, Button, notification, Row, Col, BackTop} from 'antd';
+import { Layout, Breadcrumb, Menu, Button, notification, Row, Col, BackTop, Skeleton} from 'antd';
 import Base from '../base';
 import JobTable from '../queue/jobTable';
 import JobForm from '../queue/jobForm';
@@ -191,7 +191,7 @@ class Home extends React.Component {
                       onDelete={this.handleDeleteJob}
                       />
                   </React.Fragment>
-                ) : null
+                ) : <Skeleton/>
               }
             </Content>
           </Layout>

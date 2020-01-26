@@ -1,7 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
-import {Card, Row} from 'antd';
+import {Card, Row, Skeleton} from 'antd';
 
 import NodeForm from './nodeForm';
 import InfoItem from '../infoItem';
@@ -71,7 +71,7 @@ class Cluster extends React.Component {
                 info={humanReadableFilesize(nodesInfo.saved_space)}
               />
             </Card>
-          ) : null
+          ) : <Skeleton/>
 
         }
         <NodeForm
