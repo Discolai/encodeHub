@@ -1,6 +1,7 @@
 import React from 'react';
 import PropTypes from 'prop-types';
 import axios from 'axios';
+import io from 'socket.io-client';
 import {msToHHMMSS, errorNotification, humanReadableFilesize} from '../../util';
 import NodeForm from './nodeForm.jsx';
 import InfoItem from '../infoItem';
@@ -14,37 +15,34 @@ class NodeItem extends React.Component {
     status: "Offline",
     showForm: false,
   }
-  timer = null;
+  socket = null;
+
+  setSocketIoCallbacks = () => {
+    const {node} = this.props;
+    if (node) {
+      if (this.socket) this.socket.close();
+      this.socket = io(node.address);
+      this.socket.on("progress", progress => this.setState({progress, status: progress.paused ? "Paused" : "Processing"}));
+      this.socket.on("connect", () => this.setState({status: "Polling"}));
+      this.socket.on("disconnect", () => this.setState({status: "Offline"}));
+    }
+  }
 
   componentDidMount() {
-    this.timer = setInterval(() => this.getNodeProgress(), 2000);
-    this.getNodeProgress();
+    this.setSocketIoCallbacks();
     this.getNodeInfo();
   }
 
   componentDidUpdate(prevProps) {
     if(prevProps.node !== this.props.node) {
       this.setState({node: this.props.node});
+      this.setSocketIoCallbacks();
     }
   }
 
   componentWillUnmount() {
-    clearInterval(this.timer);
-  }
-
-  getNodeProgress() {
-    const {node} = this.state;
-    if (node) {
-      axios.get(`${node.address}/job/progress`).then((response) => {
-        const status = response.data.data.paused ? "Paused" : "Running";
-        this.setState({progress: response.data.data, status: status});
-      }).catch((err) => {
-        if (err.response && err.response.status === 404) {
-          this.setState({progress: null, status: "Polling"})
-        } else {
-          this.setState({status: "Offline"})
-        }
-      });
+    if (this.socket) {
+      this.socket.close();
     }
   }
 
@@ -209,7 +207,7 @@ class NodeItem extends React.Component {
                   <Row type="flex">
                       <Col xs={24} sm={24} md={{span: 16, offset: 4}} lg={{span: 16, offset: 4}} xl={{span: 16, offset: 4}}>
                         <Progress
-                          status={status === "Running" ? "active" : "normal"}
+                          status={status === "Processing" ? "active" : "normal"}
                           percent={progress.percentage ? progress.percentage : 0}
                           format={(percent, successPercent) => <div style={{color: "#FFF"}}>{`${percent} %`}</div>}
                         />

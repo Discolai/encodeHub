@@ -15,6 +15,9 @@ def progress():
     else:
         return jsonify({"err": "No progress available", "data": None}), 404
 
+def broadcast_progress(progress):
+    api.socketio.emit("progress", progress, broadcast=True, json=True)
+
 @job_bp.route("/pause", methods=["POST"])
 def pause():
     api.paused = not api.paused

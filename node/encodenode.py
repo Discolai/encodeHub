@@ -52,6 +52,7 @@ def handle_job(j):
         progress = job.read_progress().copy()
         progress = {**progress, **j} if progress["bitrate"] else (api.progress_q[0] if len(api.progress_q) else {})
         progress["paused"] = api.paused
+        api.job.broadcast_progress(progress)
         api.progress_q.insert(0, progress)
 
     if job.has_finished():
