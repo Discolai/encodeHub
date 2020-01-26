@@ -1,6 +1,7 @@
 from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load
-from marshmallow.validate import Length
+from marshmallow.validate import Length, Range
+from marshmallow.exceptions import ValidationError
 from api.db import get_db
 from math import ceil
 
@@ -22,6 +23,9 @@ class LogSchema(Schema):
     muxing_overhead = fields.Float(required=True)
     finished = fields.Bool(required=True)
 
+class PagingSchema(Schema):
+    page = fields.Int(required=True, validate=[Range(min=0, error="Pages start at 1")])
+    pageSize = fields.Int(required=True, validate=[Range(min=10, max=100, error="Page size can be between 10 and 100")])
 
 @logs_blu.route("/", methods=["GET"])
 def get_logs():
@@ -40,14 +44,16 @@ def delete_log(lid):
 def get_logs_for(nid):
     cur = get_db().cursor()
 
-    limit = int(request.args.get("limit", 20));
-    page = int(request.args.get("page", 0));
+    pageSize = int(request.args.get("pageSize", 20));
+    page = int(request.args.get("page", 1)) - 1; # subtract 1 so pages start at 0
+    PagingSchema().load({"page": page, "pageSize": pageSize})
+
     cur.execute("select count(lid) as count from (select * from nodes where nid = ?) natural join logs;", (nid,))
     count = dict(cur.fetchall()[0])["count"]
 
-    cur.execute("select * from (select * from nodes where nid = ?) natural join logs limit ? offset ?;", (nid,limit, int(page*limit)))
+    cur.execute("select * from (select * from nodes where nid = ?) natural join logs natural join jobs limit ? offset ?;", (nid,pageSize, int(page*pageSize)))
     logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}})
+    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page+1, "totalResults": count, "pageSize": pageSize}})
 
 @logs_blu.route("/", methods=["POST"])
 def post_log_for():
@@ -67,41 +73,3 @@ def post_log_for():
     if log["finished"]:
         cur.execute("update jobs set finished=1 where jid=?;", (log["jid"],))
     return Response(), 201
-
-
-@logs_blu.route("/status", methods=["GET"])
-def get_status():
-    cur = get_db().cursor()
-    limit = int(request.args.get("limit", 20));
-    page = int(request.args.get("page", 0));
-    cur.execute("select count(distinct nid) as count from logs;")
-    count = dict(cur.fetchall()[0])["count"]
-
-    sql = (
-        "select nid, name, (sum(prev_size)-sum(lsize)) as saved_space, "
-        "t.sum_etime, t.completed_count, (t.sum_etime/t.completed_count) as average_etime from logs "
-        "natural join "
-        "(select nid, sum(elapsed_time_ms) as sum_etime , count(nid) as completed_count from logs group by nid) as t "
-        "natural join "
-        "(select nid, name from nodes) "
-        "group by nid;"
-    )
-    cur.execute(sql)
-    logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}})
-
-@logs_blu.route("/status/<int:nid>", methods=["GET"])
-def get_status_for(nid):
-    cur = get_db().cursor()
-
-    sql = (
-        "select nid, name, (sum(prev_size)-sum(lsize)) as saved_space, "
-        "t.sum_etime, t.completed_count, (t.sum_etime/t.completed_count) as average_etime from logs "
-        "natural join "
-        "(select nid, sum(elapsed_time_ms) as sum_etime , count(nid) as completed_count from logs where nid=?) as t "
-        "natural join "
-        "(select nid, name from nodes where nid=?);"
-    )
-    cur.execute(sql, (nid, nid))
-    logs = [dict(row) for row in cur.fetchall()]
-    return jsonify({"err": None, "data": logs[0] if len(logs) else None})

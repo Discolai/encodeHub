@@ -1,12 +1,17 @@
 from flask import Flask
 from collections import deque
+from flask_socketio import SocketIO, emit, send
 import json, os
 from api.queue import queue_bp
 from api.job import job_bp
 from api.config import config_bp
 
-app = Flask(__name__)
+import eventlet
+eventlet.monkey_patch()
 
+app = Flask(__name__)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 stop = False
 paused = False
@@ -29,5 +34,4 @@ def add_header(response):
     return response
 
 def run():
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=config["api_port"])
+    socketio.run(app, host="0.0.0.0", port=config["api_port"])

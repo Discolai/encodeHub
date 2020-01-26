@@ -1,6 +1,6 @@
 from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load, validates, ValidationError
-from marshmallow.validate import Length
+from marshmallow.validate import Length, Range
 from math import ceil
 import os, requests
 from api.db import get_db
@@ -17,24 +17,30 @@ class JobSchema(Schema):
 
 class EditJobSchema(JobSchema):
     nid = fields.Int(required=True, allow_none=True)
-    finished = fields.Bool(required=True, allow_none=True)
+    finished = fields.Bool(required=True)
 
 class NodeSchema(Schema):
     nid = fields.Int(required=True)
+
+class PagingSchema(Schema):
+    page = fields.Int(required=True, validate=[Range(min=0, error="Pages start at 1")])
+    pageSize = fields.Int(required=True, validate=[Range(min=10, max=100, error="Page size can be between 10 and 100")])
 
 @jobs_bp.route("/", methods=["GET"])
 def get_jobs():
     cur = get_db().cursor()
 
-    limit = int(request.args.get("limit", 20));
-    page = int(request.args.get("page", 0));
     finished = request.args.get("finished", False);
+    pageSize = int(request.args.get("pageSize", 20));
+    page = int(request.args.get("page", 1)) - 1; # subtract 1 so pages start at 0
+    PagingSchema().load({"page": page, "pageSize": pageSize})
+
     cur.execute("select count(jid) as count from jobs where finished=?;", (finished,))
     count = dict(cur.fetchall()[0])["count"]
 
-    cur.execute("select * from jobs where finished=? limit ? offset ?;", (finished, limit, int(page*limit)))
+    cur.execute("select * from jobs natural left join nodes where finished=? limit ? offset ?;", (finished, pageSize, int(page*pageSize)))
     jobs = [dict(job) for job in cur.fetchall()]
-    return jsonify({"err": None, "data": jobs, "paging": {"currentPage": page, "totalPages": ceil(count/limit)}}), 200
+    return jsonify({"err": None, "data": jobs, "paging": {"currentPage": page+1, "totalResults": count, "pageSize": pageSize}}), 200
 
 
 @jobs_bp.route("/", methods=["POST"])
@@ -57,7 +63,6 @@ def delete_jobs(jid):
 @jobs_bp.route("/<int:jid>", methods=["POST"])
 def update_jobs(jid):
     ejob = EditJobSchema().load(request.json)
-    ejob["finished"] = 0 if ejob["finished"] == None else 1
     cur = get_db().cursor()
 
     cur.execute("select * from jobs where jid=?;", (jid, ))

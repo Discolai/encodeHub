@@ -2,7 +2,7 @@ from flask import Flask, Response, request, jsonify, Blueprint
 from marshmallow import Schema, fields, post_load
 from marshmallow.validate import Length
 
-import api, json
+import api, json, os
 
 config_bp = Blueprint("config", __name__)
 
@@ -21,7 +21,7 @@ def setup_node():
     setup = SetupSchema().load(request.json)
 
     api.config = {**api.config, **setup}
-    with open("config.json", "w") as f:
-        json.dump(api.config, f)
+    with open(os.path.join(api.BASE_DIR, "config.json"), "w") as f:
+        config = json.dump(api.config, f, indent="\t", separators=(',', ': '))
 
     return jsonify({"err": None})

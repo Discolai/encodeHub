@@ -50,13 +50,14 @@ def handle_job(j):
             job.resume()
 
         progress = job.read_progress().copy()
+        progress = {**progress, **j} if progress["bitrate"] else (api.progress_q[0] if len(api.progress_q) else {})
         progress["paused"] = api.paused
-        progress = {**progress, **j}
+        api.job.broadcast_progress(progress)
         api.progress_q.insert(0, progress)
 
     if job.has_finished():
         report = job.report.copy()
-        report["prev_size"] = os.path.getsize(j["job"])/1024 # convert to kibibytes
+        report["prev_size"] = os.path.getsize(j["job"])/1048576 # convert to mebibytes
         report["jid"] = j["jid"]
         report["nid"] = api.config["nid"]
         send_report(report)
