@@ -34,4 +34,4 @@ def add_header(response):
     return response
 
 def run():
-    socketio.run(app, port=config["api_port"])
+    socketio.run(app, host="0.0.0.0", port=config["api_port"])
