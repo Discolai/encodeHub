@@ -2,7 +2,7 @@ import React, { Component } from 'react';
 import { Route, Switch, BrowserRouter as Router } from 'react-router-dom'
 import 'antd/dist/antd.css';
 import Nodes from './components/nodes/nodes'
-import Home from './components/home/home';
+import Queue from './components/queue/queue';
 
 const notFound = () =>  {
   return (
@@ -15,7 +15,7 @@ class App extends Component {
     return (
       <Router>
           <Switch>
-            <Route exact path="/" component={Home} switch/>
+            <Route exact path="/" component={Queue} switch/>
             <Route exact path="/nodes" component={Nodes} switch/>
             <Route exact path="/nodes/:nid" component={Nodes} switch/>
             <Route component={notFound}/>
