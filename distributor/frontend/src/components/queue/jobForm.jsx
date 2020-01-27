@@ -47,7 +47,7 @@ class JobForm extends React.Component {
                         message: "The job path cannot be longer than 255 characters!"
                       }
                     ],
-              })(<Input/>)
+              })(<Input autoFocus={true}/>)
             }
           </Form.Item>
           <Form.Item label="Node">
@@ -63,7 +63,7 @@ class JobForm extends React.Component {
           <Form.Item label="Finished">
             {
               getFieldDecorator('finished', {
-                initialValue: job && job.finished,
+                initialValue: (job && job.finished) ? 1 : 0,
                 valuePropName: "checked"
               })(<Checkbox />)
             }
