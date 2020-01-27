@@ -98,7 +98,7 @@ class JobTable extends React.Component {
                             message: "The job path cannot be longer than 255 characters!"
                           }
                         ],
-                  })(<Input/>)
+                  })(<Input autoFocus={true}/>)
                 }
               </Form.Item>
             ) : text
