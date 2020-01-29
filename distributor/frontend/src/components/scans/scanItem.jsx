@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import {Card, Button, Icon, Skeleton, notification} from 'antd';
+import {Card, Icon, Skeleton, notification} from 'antd';
 import io from 'socket.io-client';
 
 import InfoItem from '../infoItem';
@@ -17,17 +17,17 @@ class ScanItem extends React.Component {
   statusSocket = null;
 
   setSocketIoCallbacks = () => {
-    if (this.dataSocket) this.dataSocket.close();
-    this.dataSocket = io(window.location.href+"data");
+    if (!this.dataSocket) {
+      this.dataSocket = io(window.location.href+"data", {reconnectionDelay: 1000});
+    }
     this.dataSocket.on("scan", scan => {
       notification.open({duration: 1, message: scan.job, placement: "bottomRight"});
       this.setState({lastAdded: scan.job});
     });
-    this.dataSocket.on("connect", () => console.log("connect"));
-    this.dataSocket.on("disconnect", () => console.log("disconnect"));
 
-    if (this.statusSocket) this.statusSocket.close();
-    this.statusSocket = io(window.location.href+"status");
+    if (!this.statusSocket) {
+      this.statusSocket = io(window.location.href+"status", {reconnectionDelay: 1000, forceNew: true });
+    }
     this.statusSocket.on("scan", (status) => {
       this.setState({scanning: status.scanning});
       if (status.scanning) {
@@ -39,6 +39,11 @@ class ScanItem extends React.Component {
 
   componentDidMount() {
     this.setSocketIoCallbacks();
+  }
+
+  componentWillUnmount() {
+    if (this.dataSocket) this.dataSocket.close();
+    if (this.statusSocket) this.statusSocket.close();
   }
 
   getScan() {
@@ -72,12 +77,12 @@ class ScanItem extends React.Component {
                 icon="sync"
                 iconSpin={true}
                 info={(
-                  <a onClick={() => this.handleStopScan()}>
+                  <div onClick={() => this.handleStopScan()}>
                     <Icon
                       style={{color: "#FFF", fontSize: "2em"}}
                       type="stop"
                       />
-                  </a>
+                  </div>
                 )}
               />
           ) : <Skeleton/>

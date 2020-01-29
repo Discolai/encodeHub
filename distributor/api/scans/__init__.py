@@ -65,6 +65,10 @@ def broadcast_scan_status(scanning):
 def handle_scan_status():
     api.socketio.emit("scan", {"scanning": bool(scan_thread and scan_thread.isAlive())}, namespace="/status")
 
+@api.socketio.on("scan", namespace="/status")
+def handle_status_request():
+    api.socketio.emit("scan", {"scanning": bool(scan_thread and scan_thread.isAlive())}, namespace="/status")
+
 @scans_bp.route("/start", methods=["POST"])
 def start_scan():
     scan = ScanSchema().load(request.json)

@@ -25,7 +25,7 @@ class JobTable extends React.Component {
     const {getFieldDecorator} = this.props.form;
 
     const options = nodes.map((node) => (
-      <Option key={node.nid} value={node.nid}>{node.name}</Option>
+      <Select.Option key={node.nid} value={node.nid}>{node.name}</Select.Option>
     ));
 
     return (
