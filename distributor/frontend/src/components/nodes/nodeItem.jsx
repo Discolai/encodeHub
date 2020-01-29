@@ -40,12 +40,6 @@ class NodeItem extends React.Component {
     }
   }
 
-  componentWillUnmount() {
-    if (this.socket) {
-      this.socket.close();
-    }
-  }
-
   getNodeInfo() {
     const {node} = this.state;
     if (node) {

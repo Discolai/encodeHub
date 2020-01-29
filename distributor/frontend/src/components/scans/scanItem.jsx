@@ -1,6 +1,6 @@
 import React from 'react';
 import axios from 'axios';
-import {Card, Button, Icon, Skeleton, notification} from 'antd';
+import {Card, Icon, Skeleton, notification} from 'antd';
 import io from 'socket.io-client';
 
 import InfoItem from '../infoItem';
@@ -23,8 +23,6 @@ class ScanItem extends React.Component {
       notification.open({duration: 1, message: scan.job, placement: "bottomRight"});
       this.setState({lastAdded: scan.job});
     });
-    this.dataSocket.on("connect", () => console.log("connect"));
-    this.dataSocket.on("disconnect", () => console.log("disconnect"));
 
     if (this.statusSocket) this.statusSocket.close();
     this.statusSocket = io(window.location.href+"status");

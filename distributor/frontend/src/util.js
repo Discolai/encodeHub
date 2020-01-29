@@ -42,4 +42,4 @@ function humanReadableFilesize(size) {
   return `${size} MiB`;
 }
 
-module.exports = {msToHHMMSS, validURL, URLPattern, errorNotification, humanReadableFilesize};
+export {msToHHMMSS, validURL, URLPattern, errorNotification, humanReadableFilesize};
