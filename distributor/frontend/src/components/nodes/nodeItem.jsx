@@ -33,10 +33,13 @@ class NodeItem extends React.Component {
     this.getNodeInfo();
   }
 
+  componentWillUnmount() {
+    if (this.socket) this.socket.close();
+  }
+
   componentDidUpdate(prevProps) {
     if(prevProps.node !== this.props.node) {
-      this.setState({node: this.props.node});
-      this.setSocketIoCallbacks();
+      this.setState({node: this.props.node}, this.setSocketIoCallbacks());
     }
   }
 
@@ -166,18 +169,18 @@ class NodeItem extends React.Component {
                   <React.Fragment>
                     <Row type="flex" style={{marginTop: "2em"}}>
                       <Col xs={24} sm={24} md={{offset: 4}} lg={{offset: 4}} xl={{offset: 4}}>
-                        <a onClick={() => this.handlePause()}>
+                        <div onClick={() => this.handlePause()}>
                           <Icon
                             style={{color: "#FFF", fontSize: "2em", marginRight: "0.5em"}}
                             type={progress.paused ? "play-circle" : "pause-circle"}
                             />
-                        </a>
-                        <a onClick={() => this.handleStop()}>
+                        </div>
+                        <div onClick={() => this.handleStop()}>
                           <Icon
                             style={{color: "#FFF", fontSize: "2em"}}
                             type="stop"
                             />
-                        </a>
+                        </div>
                       </Col>
                     </Row>
                     <InfoItem
