@@ -1,6 +1,11 @@
 from flask import Flask, render_template, send_from_directory
+from flask_socketio import SocketIO
 from werkzeug.routing import BaseConverter
+from flask_cors import CORS
 import json, os, sqlite3
+
+import eventlet
+eventlet.monkey_patch()
 
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
@@ -22,6 +27,10 @@ class RegexConverter(BaseConverter):
         self.regex = items[0]
 
 app = Flask(__name__, static_folder="../frontend/build")
+CORS(app)
+app.config['SECRET_KEY'] = 'secret!'
+socketio = SocketIO(app, cors_allowed_origins="*", logger=True)
+
 app.url_map.converters['regex'] = RegexConverter
 
 from api.jobs import jobs_bp
@@ -33,11 +42,6 @@ app.register_blueprint(jobs_bp, url_prefix="/api/jobs")
 app.register_blueprint(logs_blu, url_prefix="/api/logs")
 app.register_blueprint(nodes_bp, url_prefix="/api/nodes")
 app.register_blueprint(scans_bp, url_prefix="/api/scans")
-
-@app.after_request
-def add_header(response):
-    response.headers['Access-Control-Allow-Origin'] = '*'
-    return response
 
 @app.route("/<regex('((?!api).)*$'):path>")
 def react(path):

@@ -1,9 +1,9 @@
-from api import app, config, BASE_DIR
+from api import socketio, app, config, BASE_DIR
 import api.error_handlers, os, json
 
 def main():
-    from waitress import serve
-    serve(app, host="0.0.0.0", port=config["api_port"])
+    socketio.run(app, host="0.0.0.0", port=config["api_port"])
+
 
 if __name__ == '__main__':
     try:

@@ -9,15 +9,13 @@ jobs_bp = Blueprint("jobs", __name__)
 
 class JobSchema(Schema):
     job = fields.Str(required=True, validate=Length(max=255, min=5))
+    nid = fields.Int(required=True, allow_none=True)
+    finished = fields.Bool(required=True)
 
     @validates("job")
     def validate_error(self, value):
         if not os.path.isfile(value):
             raise ValidationError("Job must be a file.")
-
-class EditJobSchema(JobSchema):
-    nid = fields.Int(required=True, allow_none=True)
-    finished = fields.Bool(required=True)
 
 class NodeSchema(Schema):
     nid = fields.Int(required=True)
@@ -46,12 +44,10 @@ def get_jobs():
 @jobs_bp.route("/", methods=["POST"])
 def post_jobs():
     jobs = JobSchema(many=True).load(request.json)
-    if not len(jobs):
-        return jsonify({"err": "Empty request!"}), 400
 
     cur = get_db().cursor()
     for job in jobs:
-        cur.execute("insert into jobs (job) values (?)", (job["job"],))
+        cur.execute("insert into jobs (job,nid,finished) values (?,?,?)", (job["job"],job["nid"],job["finished"]))
     return Response(), 201
 
 @jobs_bp.route("/<int:jid>", methods=["DELETE"])
@@ -62,7 +58,7 @@ def delete_jobs(jid):
 
 @jobs_bp.route("/<int:jid>", methods=["POST"])
 def update_jobs(jid):
-    ejob = EditJobSchema().load(request.json)
+    ejob = JobSchema().load(request.json)
     cur = get_db().cursor()
 
     cur.execute("select * from jobs where jid=?;", (jid, ))
