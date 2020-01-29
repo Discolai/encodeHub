@@ -1,5 +1,5 @@
 import os, json, re, sqlite3, pexpect, sys
-from api import config
+from api import config, scans
 
 class VideoInfo:
     def __init__(self, sid, config):
@@ -28,10 +28,11 @@ class VideoInfo:
                         cur = db.cursor()
                         try:
                             cur.execute("insert into jobs (job) values (?)", (file,))
+                            db.commit()
+                            db.close()
+                            scans.broadcast_scan({"job": file})
                         except:
                             pass
-                        db.commit()
-                        db.close()
 
     def cleanup(self):
         db = sqlite3.connect(self.config["database"])
@@ -39,6 +40,7 @@ class VideoInfo:
         cur.execute("update scans set stop = CURRENT_TIMESTAMP where sid = ?;", (self.sid,))
         db.commit()
         db.close()
+        scans.broadcast_scan_status(False)
 
 def run(stop, sid, dir):
     info = VideoInfo(sid, config)

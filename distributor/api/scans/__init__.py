@@ -3,7 +3,7 @@ from marshmallow import Schema, fields, validates, ValidationError
 from marshmallow.validate import Length, Range
 from api.db import get_db
 from api.scans.scan_dir import run
-import os, threading
+import os, threading, api
 
 scans_bp = Blueprint("scans", __name__)
 
@@ -55,6 +55,16 @@ def get_running():
         return jsonify({"err": None, "data": scan[0]})
     return jsonify({"err": "No scan is running!", "data": None})
 
+def broadcast_scan(scan):
+    api.socketio.emit("scan", scan, broadcast=True, json=True, namespace="/data")
+
+def broadcast_scan_status(scanning):
+    api.socketio.emit("scan", {"scanning": scanning}, broadcast=True, json=True, namespace="/status")
+
+@api.socketio.on("connect", namespace="/status")
+def handle_scan_status():
+    api.socketio.emit("scan", {"scanning": bool(scan_thread and scan_thread.isAlive())}, namespace="/status")
+
 @scans_bp.route("/start", methods=["POST"])
 def start_scan():
     scan = ScanSchema().load(request.json)
@@ -73,7 +83,7 @@ def start_scan():
     global stop_thread
     scan_thread = threading.Thread(target=run, daemon=True, args=(lambda : stop_thread, scan["sid"], scan["dir"]))
     scan_thread.start()
-
+    broadcast_scan_status(True)
     return jsonify({"err": None, "data": scan}), 201
 
 
@@ -87,4 +97,5 @@ def stop_scan(sid):
     global stop_thread
     stop_thread = True
     scan_thread.join()
+    stop_thread = False
     return Response()
