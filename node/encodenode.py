@@ -31,7 +31,10 @@ def handle_job(j):
     input = "\"%s\""%(j["job"])
     output = "\"%shevc.mkv\""%(j["job"][:-3])
 
-    job = FFmpeg(api.config["ffmpeg"]["inargs"], input, api.config["ffmpeg"]["outargs"], output)
+    try:
+        job = FFmpeg(api.config["ffmpeg"]["inargs"], input, api.config["ffmpeg"]["outargs"], output)
+    except FileNotFoundError as e:
+        return
 
     job.start()
 
