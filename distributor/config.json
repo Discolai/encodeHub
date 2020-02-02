@@ -12,6 +12,6 @@
     "mkv",
     "mp4"
   ],
-  "database": "",
+  "database": "db.sqlite3",
   "api_port": 4000
 }
