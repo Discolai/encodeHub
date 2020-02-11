@@ -8,7 +8,7 @@ function msToHHMMSS(s) {
   s = (s - secs) / 60;
   let mins = s % 60;
   let hrs = (s - mins) / 60;
-  return `${("00"+hrs).slice(-2)}:${("00"+mins).slice(-2)}:${("00"+secs).slice(-2)}.${ms}`;
+  return `${hrs}:${("00"+mins).slice(-2)}:${("00"+secs).slice(-2)}.${ms}`;
 }
 
 const URLPattern = "^(http://www.|https://www.|http://|https://)?[a-z0-9]+([-.]{1}[a-z0-9]+)*(:[0-9]{1,5})?(/.*)?$";
