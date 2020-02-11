@@ -1,4 +1,4 @@
-import re, signal, pexpect, time
+import re, signal, pexpect, time, os
 from pydoc import locate
 
 millis_now = lambda: int(round(time.time() * 1000))
@@ -36,6 +36,9 @@ class FFmpeg:
     ]
 
     def __init__(self, inargs, input, outargs, output):
+        if not os.path.isfile(input):
+            raise FileNotFoundError(input)
+
         self.cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
 
         self._p = None
