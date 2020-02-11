@@ -29,7 +29,7 @@ class RegexConverter(BaseConverter):
 app = Flask(__name__, static_folder="../frontend/build")
 CORS(app)
 app.config['SECRET_KEY'] = 'secret!'
-socketio = SocketIO(app, cors_allowed_origins="*", logger=True)
+socketio = SocketIO(app, cors_allowed_origins="*")
 
 app.url_map.converters['regex'] = RegexConverter
 
