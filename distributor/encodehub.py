@@ -1,4 +1,4 @@
-from api import socketio, app, config, BASE_DIR
+from api import socketio, app, config, BASE_DIR, CONFIG_PATH
 import api.error_handlers, os, json
 
 def main():
@@ -13,5 +13,5 @@ if __name__ == '__main__':
     except:
         pass
     finally:
-        with open(os.path.join(BASE_DIR, "config.json"), "w") as f:
+        with open(os.path.join(BASE_DIR, CONFIG_PATH), "w") as f:
             config = json.dump(config, f, indent="\t", separators=(',', ': '))
