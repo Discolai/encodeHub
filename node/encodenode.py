@@ -28,8 +28,8 @@ def send_report(log):
 def handle_job(j):
     print("Got job: ", j["job"])
 
-    input = "\"%s\""%(j["job"])
-    output = "\"%shevc.mkv\""%(j["job"][:-3])
+    input = f"{j['job']}"
+    output = f"{j['job'][:-3]}hevc.mkv"
 
     try:
         job = FFmpeg(api.config["ffmpeg"]["inargs"], input, api.config["ffmpeg"]["outargs"], output)
@@ -98,5 +98,5 @@ if __name__ == '__main__':
     except:
         pass
     finally:
-        with open(os.path.join(api.BASE_DIR, "config.json"), "w") as f:
+        with open(os.path.join(api.BASE_DIR, api.CONFIG_PATH), "w") as f:
             config = json.dump(api.config, f, indent="\t", separators=(',', ': '))

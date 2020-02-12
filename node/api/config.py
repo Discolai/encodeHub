@@ -21,7 +21,7 @@ def setup_node():
     setup = SetupSchema().load(request.json)
 
     api.config = {**api.config, **setup}
-    with open(os.path.join(api.BASE_DIR, "config.json"), "w") as f:
+    with open(os.path.join(api.BASE_DIR, api.CONFIG_PATH), "w") as f:
         config = json.dump(api.config, f, indent="\t", separators=(',', ': '))
 
     return jsonify({"err": None})

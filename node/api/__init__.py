@@ -9,6 +9,7 @@ from api.config import config_bp
 import eventlet
 eventlet.monkey_patch()
 
+
 app = Flask(__name__)
 app.config['SECRET_KEY'] = 'secret!'
 socketio = SocketIO(app, cors_allowed_origins="*")
@@ -18,8 +19,9 @@ paused = False
 progress_q = deque()
 job_q = deque()
 BASE_DIR = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+CONFIG_PATH = "data/config.json"
 
-with open(os.path.join(BASE_DIR, "config.json"), "r") as f:
+with open(os.path.join(BASE_DIR, CONFIG_PATH), "r") as f:
     config = json.load(f)
 
 app.register_blueprint(queue_bp, url_prefix="/queue")
