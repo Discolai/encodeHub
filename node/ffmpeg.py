@@ -1,5 +1,6 @@
 import re, signal, pexpect, time, os
 from pydoc import locate
+import difflib
 
 millis_now = lambda: int(round(time.time() * 1000))
 
@@ -39,7 +40,7 @@ class FFmpeg:
         if not os.path.isfile(input):
             raise FileNotFoundError(input)
 
-        self.cmd = " ".join(["ffmpeg", *inargs, "-i", input, *outargs, output])
+        self.cmd = " ".join(["ffmpeg", *inargs, "-i", f"\"{input}\"", *outargs, f"\"{output}\""])
 
         self._p = None
         self.progress = None

@@ -1,17 +1,21 @@
 {
-  "ffprobe": {
-    "args": [
-      "-v error",
-      "-select_streams v:0",
-      "-show_entries stream=codec_name",
-      "-of default=noprint_wrappers=1:nokey=1"
-    ]
-  },
-  "wanted": ["x265", "h265", "hevc"],
-  "extentions": [
-    "mkv",
-    "mp4"
-  ],
-  "database": "db.sqlite3",
-  "api_port": 4000
+	"ffprobe": {
+		"args": [
+			"-v error",
+			"-select_streams v:0",
+			"-show_entries stream=codec_name",
+			"-of default=noprint_wrappers=1:nokey=1"
+		]
+	},
+	"wanted": [
+		"x265",
+		"h265",
+		"hevc"
+	],
+	"extentions": [
+		"mkv",
+		"mp4"
+	],
+	"database": "data/db.sqlite3",
+	"api_port": 4000
 }
