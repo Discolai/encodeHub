@@ -8,6 +8,7 @@
 			"-nostdin"
 		],
 		"outargs": [
+			"-max_muxing_queue_size 1024",
 			"-map 0:v:0 -c:v libx265",
 			"-crf 24",
 			"-map 0:a -c:a copy",
