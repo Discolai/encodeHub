@@ -1,6 +1,5 @@
 import re, signal, pexpect, time, os
 from pydoc import locate
-import difflib
 
 millis_now = lambda: int(round(time.time() * 1000))
 
@@ -22,7 +21,7 @@ class FFmpeg:
         "drop_frames": (re.compile(b"drop_frames=[ ]*(?P<drop_frames>\d+)"), "int"),
         "speed": (re.compile(b"speed=[ ]*(?P<speed>[\\d\\.]+)x"), "float"),
         "progress":(re.compile(b"progress=[ ]*(?P<progress>\\w+)"), "str"),
-        "lsize":(re.compile(b"Lsize=[ ]*(?P<lsize>\\d+)"), "str"),
+        "lsize":(re.compile(b"Lsize=[ ]*(?P<lsize>\\d+)"), "int"),
         "video": (re.compile(b"video[ ]*:[ ]*(?P<video>\\d+)"), "int"),
         "audio": (re.compile(b"audio[ ]*:[ ]*(?P<audio>\\d+)"), "int"),
         "subtitle": (re.compile(b"subtitle[ ]*:[ ]*(?P<subtitle>\\d+)"), "int"),
